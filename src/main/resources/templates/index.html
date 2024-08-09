@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Main Page</title>
+    <!-- Bootstrap CSS -->
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body {
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background-color: #f8f9fa;
+            position: relative;
+        }
+        .links-container {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+        }
+        .btn-link {
+            font-size: 16px;
+            color: #007bff;
+            text-decoration: none;
+            margin: 0 10px;
+        }
+        .btn-link:hover {
+            text-decoration: underline;
+        }
+        .welcome-message {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            font-size: 16px;
+            color: #007bff;
+        }
+        .container {
+            text-align: center;
+            background-color: #ffffff;
+            padding: 40px;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .questions-container {
+            margin-top: 20px;
+            padding: 20px;
+            background-color: #ffffff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        .question-item {
+            margin-bottom: 15px;
+        }
+        .question-item h3 {
+            margin-bottom: 10px;
+        }
+        .answer-item {
+            margin-bottom: 10px;
+        }
+    </style>
+</head>
+<body>
+<div class="links-container" id="links-container">
+    <a href="login.html" class="btn-link" id="login-link">Login</a>
+    <a href="register.html" class="btn-link" id="register-link">Register</a>
+</div>
+
+<div class="welcome-message" id="welcome-message" style="display: none;">
+    <!-- Приветственное сообщение будет вставлено сюда -->
+</div>
+
+<div class="container">
+    <h1>Welcome to the Main Page</h1>
+    <button id="book-demo-button" class="btn btn-primary">Book Demo</button>
+</div>
+
+<!-- Container for displaying questions -->
+<div id="questions-container" class="questions-container" style="display: none;">
+    <!-- Вопросы будут вставлены сюда -->
+</div>
+
+<!-- Bootstrap JS and dependencies -->
+<script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
+<script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+
+<script>
+    async function fetchCustomerInfo() {
+        const token = localStorage.getItem('accessToken');
+        console.log('Token:', token); // Добавьте эту строку для отладки
+
+        if (token) {
+            try {
+                const response = await fetch('/customerInfo', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const customerInfo = await response.json();
+                const welcomeMessageElement = document.getElementById('welcome-message');
+                const linksContainer = document.getElementById('links-container');
+
+                if (welcomeMessageElement) {
+                    welcomeMessageElement.textContent = `Welcome ${customerInfo.name} ${customerInfo.surname}`;
+                    welcomeMessageElement.style.display = 'block'; // Показать сообщение
+
+                    if (linksContainer) {
+                        linksContainer.style.display = 'none';
+                    }
+                } else {
+                    console.error('Welcome message element not found');
+                }
+            } catch (error) {
+                console.error('Error fetching customer info:', error);
+            }
+        } else {
+            document.getElementById('links-container').style.display = 'block';
+        }
+    }
+
+    async function fetchQuestions() {
+        // Установите параметры вручную
+        const skillIds = [1]; // Ваши значения для skillIds
+        const jobId = 1;         // Ваше значение для jobId
+        const id = 0;           // Ваше значение для id
+
+        console.log('Skill IDs:', skillIds);
+        console.log('Job ID:', jobId);
+        console.log('ID:', id);
+
+        const token = localStorage.getItem('accessToken');
+
+        if (skillIds.length > 0 && jobId && token) {
+            try {
+                // Формируем URL с параметрами
+                const response = await fetch(`/questions/first?skillIds=${skillIds.join(',')}&jobId=${jobId}&id=${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const skillQuestionResponse = await response.json();
+                displayQuestions(skillQuestionResponse);
+            } catch (error) {
+                console.error('Error fetching questions:', error);
+            }
+        } else {
+            console.error('Missing parameters or token');
+        }
+    }
+
+    function displayQuestions(response) {
+        const container = document.getElementById('questions-container');
+
+        if (container) {
+            container.innerHTML = ''; // Очищаем контейнер перед добавлением новых данных
+
+            response.skillsQuestions.forEach(skillQuestion => {
+                const skillElement = document.createElement('div');
+                skillElement.className = 'question-item';
+
+                // Заголовок для навыка
+                const skillTitle = document.createElement('h3');
+                skillTitle.textContent = skillQuestion.skillName;
+                skillElement.appendChild(skillTitle);
+
+                // Информация о работе
+                if (skillQuestion.job) {
+                    const jobInfo = document.createElement('p');
+                    jobInfo.textContent = `Job: ${skillQuestion.job.name} (ID: ${skillQuestion.job.id})`;
+                    skillElement.appendChild(jobInfo);
+                }
+
+                skillQuestion.questions.forEach(question => {
+                    const questionElement = document.createElement('div');
+                    questionElement.className = 'question-item';
+                    questionElement.innerHTML = `<p><strong>Q${question.id}: ${question.text}</strong></p>`;
+
+                    // Варианты ответов
+                    question.answers.forEach(answer => {
+                        const answerElement = document.createElement('div');
+                        answerElement.className = 'answer-item';
+                        answerElement.innerHTML = `<p>${answer.text} (Score: ${answer.score}, Priority: ${answer.priority})</p>`;
+                        questionElement.appendChild(answerElement);
+                    });
+
+                    skillElement.appendChild(questionElement);
+                });
+
+                container.appendChild(skillElement);
+            });
+
+            container.style.display = 'block'; // Показать контейнер с вопросами
+        } else {
+            console.error('Questions container not found');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', fetchCustomerInfo);
+
+    // Добавляем обработчик события для кнопки
+    document.getElementById('book-demo-button').addEventListener('click', fetchQuestions);
+</script>
+</body>
+</html>

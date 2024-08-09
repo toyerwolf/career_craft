@@ -1,0 +1,202 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Questions and Reports</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        .question-item {
+            margin-bottom: 20px;
+        }
+        .answer-item {
+            margin-top: 10px;
+            cursor: pointer;
+        }
+        .answer-item.selected {
+            background-color: #e0e0e0;
+        }
+        .report {
+            margin-top: 30px;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <h1>Questions</h1>
+    <div id="questions-container"></div>
+
+    <button id="fetchReportsButton">Fetch Reports</button>
+    <div class="report" id="reportSection" style="display: none;">
+        <h2>Reports</h2>
+        <ul id="reportList"></ul>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', async function() {
+        const urlParams = new URLSearchParams(window.location.search);
+
+        const skillIdsParam = urlParams.get('skillIds') || '1';
+        const jobIdParam = urlParams.get('jobId') || '1';
+        const idParam = urlParams.get('id') || '0';
+
+        const skillIds = skillIdsParam.split(',').map(id => parseInt(id, 10));
+        const jobId = parseInt(jobIdParam, 10);
+        const id = parseInt(idParam, 10);
+
+        const token = localStorage.getItem('accessToken');
+
+        if (skillIds.length > 0 && jobId && token) {
+            try {
+                const response = await fetch(`/questions/first?skillIds=${skillIds.join(',')}&jobId=${jobId}&id=${id}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const skillQuestionResponse = await response.json();
+                displayQuestions(skillQuestionResponse);
+            } catch (error) {
+                console.error('Error fetching questions:', error);
+            }
+        } else {
+            console.error('Missing parameters or token');
+        }
+    });
+
+    function displayQuestions(response) {
+        const container = document.getElementById('questions-container');
+
+        if (container) {
+            container.innerHTML = '';
+
+            response.skillsQuestions.forEach(skillQuestion => {
+                const skillElement = document.createElement('div');
+                skillElement.className = 'question-item';
+
+                const skillTitle = document.createElement('h3');
+                skillTitle.textContent = skillQuestion.skillName;
+                skillElement.appendChild(skillTitle);
+
+                if (skillQuestion.job) {
+                    const jobInfo = document.createElement('p');
+                    jobInfo.textContent = `Job: ${skillQuestion.job.name} (ID: ${skillQuestion.job.id})`;
+                    skillElement.appendChild(jobInfo);
+                }
+
+                skillQuestion.questions.forEach(question => {
+                    const questionElement = document.createElement('div');
+                    questionElement.className = 'question-item';
+                    questionElement.innerHTML = `<p><strong>Q${question.id}: ${question.text}</strong></p>`;
+
+                    question.answers.forEach(answer => {
+                        const answerElement = document.createElement('div');
+                        answerElement.className = 'answer-item';
+                        answerElement.dataset.orderValue = answer.orderValue;
+                        answerElement.dataset.questionId = question.id;
+                        answerElement.textContent = `${answer.text} (Score: ${answer.orderValue})`;
+
+                        answerElement.addEventListener('click', async function() {
+                            const selectedOrderValue = this.dataset.orderValue;
+                            const selectedQuestionId = this.dataset.questionId;
+                            const token = localStorage.getItem('accessToken');
+                            const customerId = localStorage.getItem('customerId'); // Получение customerId из localStorage
+
+                            try {
+                                const response = await fetch('/answerWithReports', {
+                                    method: 'POST',
+                                    headers: {
+                                        'Content-Type': 'application/json',
+                                        'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify({
+                                        customerId: customerId,
+                                        questionId: selectedQuestionId,
+                                        orderValue: selectedOrderValue
+                                    })
+                                });
+
+                                if (!response.ok) {
+                                    throw new Error('Network response was not ok');
+                                }
+
+                                const result = await response.json();
+                                if (result.reports) {
+                                    displayReports(result.reports);
+                                } else {
+                                    displayQuestions(result); // Get next question
+                                }
+                            } catch (error) {
+                                console.error('Error submitting answer:', error);
+                            }
+                        });
+
+                        questionElement.appendChild(answerElement);
+                    });
+
+                    skillElement.appendChild(questionElement);
+                });
+
+                container.appendChild(skillElement);
+            });
+
+            container.style.display = 'block';
+        } else {
+            console.error('Questions container not found');
+        }
+    }
+
+    document.getElementById('fetchReportsButton').addEventListener('click', async function() {
+        const token = localStorage.getItem('accessToken');
+        const customerId = localStorage.getItem('customerId'); // Получение customerId из localStorage
+
+        if (token && customerId) {
+            try {
+                const response = await fetch(`/reports?customerId=${customerId}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    throw new Error('Network response was not ok');
+                }
+
+                const reports = await response.json();
+                displayReports(reports);
+            } catch (error) {
+                console.error('Error fetching reports:', error);
+            }
+        } else {
+            console.error('Missing parameters or token');
+        }
+    });
+
+    function displayReports(reports) {
+        const reportSection = document.getElementById('reportSection');
+        const reportList = document.getElementById('reportList');
+        reportList.innerHTML = '';
+
+        reports.forEach(report => {
+            const listItem = document.createElement('li');
+            listItem.innerText = `Skill: ${report.skillName}, Score: ${report.score}, Level: ${report.skillLevel}`;
+            reportList.appendChild(listItem);
+        });
+
+        reportSection.style.display = 'block';
+    }
+</script>
+</body>
+</html>

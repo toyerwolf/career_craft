@@ -1,0 +1,30 @@
+server:
+  port: 8080
+
+spring:
+  profiles:
+    include: db,google,mail
+  main:
+    allow-bean-definition-overriding: true
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+
+jwtSecret: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9123saddsaA2sdGgfsa
+jwtExpirationInMs: 3600000
+refreshTokenExpiration: 6000000
+
+jwt:
+  secret: ${jwtSecret}
+  expirationInMs: ${jwtExpirationInMs}
+  refreshTokenExpiration: ${refreshTokenExpiration}
+
+file:
+  allowed-extensions: pdf
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html

@@ -1,0 +1,35 @@
+version: '3.7'
+
+networks:
+  career_craft_network:
+    driver: bridge
+
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: career_craft
+    ports:
+      - "8090:8080"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://host.docker.internal:5432/career_craft
+
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: AAaa123456,./
+    networks:
+      - career_craft_network
+
+  db:
+    image: postgres
+    container_name: career_craft_db
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: AAaa123456,./
+      POSTGRES_DB: career_craft
+    ports:
+      - "5432:5432"
+    networks:
+      - career_craft_network
