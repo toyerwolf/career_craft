@@ -1,10 +1,12 @@
 package com.example.careercraft.service.impl;
 
 import com.example.careercraft.dto.SkillDTO;
+import com.example.careercraft.entity.Category;
 import com.example.careercraft.entity.Job;
 import com.example.careercraft.entity.Skill;
 import com.example.careercraft.repository.JobRepository;
 import com.example.careercraft.repository.SkillRepository;
+import com.example.careercraft.service.CategoryService;
 import com.example.careercraft.service.SkillService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -20,18 +22,25 @@ public class SkillServiceImpl  implements SkillService {
     private final SkillRepository skillRepository;
     private final JobRepository jobRepository;
     private final JobFinderService jobFinderService;
+    private final CategoryService categoryService;
 
 
-    @Transactional
-    public Skill findOrCreateSkillByName(String name) {
-        return skillRepository.findByName(name)
-                .orElseGet(() -> {
-                    Skill newSkill = new Skill();
-                    newSkill.setName(name);
-                    return skillRepository.save(newSkill);
-                });
+    public Skill findOrCreateSkillByName(String skillName, String categoryName) {
+        Category category = categoryService.findOrCreateCategoryByName(categoryName);
+        return skillRepository.findByName(skillName)
+                .map(skill -> {
+                    skill.setCategory(category);
+                    return skill;
+                })
+                .orElseGet(() -> createSkill(skillName, category));
     }
 
+   public Skill createSkill(String skillName, Category category) {
+        Skill skill = new Skill();
+        skill.setName(skillName);
+        skill.setCategory(category);
+        return skillRepository.save(skill);
+    }
     @Transactional
     public void addSkillToJob(Long jobId, String skillName) {
         Job job = jobFinderService.findJobById(jobId);

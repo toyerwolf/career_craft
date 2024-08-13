@@ -3,10 +3,7 @@ package com.example.careercraft.service.impl;
 
 import com.example.careercraft.dto.QuestionIdsDto;
 import com.example.careercraft.dto.SkillQuestionResponse;
-import com.example.careercraft.entity.Answer;
-import com.example.careercraft.entity.Job;
-import com.example.careercraft.entity.Question;
-import com.example.careercraft.entity.Skill;
+import com.example.careercraft.entity.*;
 import com.example.careercraft.exception.AlreadyExistException;
 import com.example.careercraft.exception.NotFoundException;
 
@@ -22,6 +19,7 @@ import com.example.careercraft.response.AnswerResponse;
 import com.example.careercraft.response.QuestionResponse;
 
 import com.example.careercraft.service.AnswerService;
+import com.example.careercraft.service.CategoryService;
 import com.example.careercraft.service.QuestionService;
 import com.example.careercraft.service.SkillService;
 import jakarta.transaction.Transactional;
@@ -44,6 +42,7 @@ public class QuestionServiceImpl implements QuestionService {
     private final JobFinderService jobFinderService;
     private final SkillService skillService;
     private final JobRepository jobRepository;
+    private final CategoryService categoryService;
 
 
 
@@ -57,7 +56,8 @@ public class QuestionServiceImpl implements QuestionService {
         checkQuestionExists(questionRequest.getText());
         Question question = createQuestion(questionRequest, job);
         createAndSetAnswers(question, questionRequest.getAnswers());
-        processSkills(question, questionRequest.getSkillNames(),job);
+        // Используем categoryName из questionRequest
+        processSkills(question, questionRequest.getSkillNames(), job, questionRequest.getCategoryName());
         return QuestionResponseMapper.toQuestionResponse(question);
     }
 
@@ -80,20 +80,23 @@ public class QuestionServiceImpl implements QuestionService {
         questionRepository.save(question); // Обновляем вопрос с ответами
     }
 
-    private void processSkills(Question question, List<String> skillNames, Job job) {
+    private void processSkills(Question question, List<String> skillNames, Job job, String categoryName) {
         if (skillNames != null && !skillNames.isEmpty()) {
             Set<Skill> skillsToAdd = new HashSet<>();
 
-            // Находим или создаем навыки
+            // Найти или создать категорию
+            Category category = categoryService.findOrCreateCategoryByName(categoryName);
+
+            // Найти или создать навыки
             for (String skillName : skillNames) {
-                Skill skill = skillService.findOrCreateSkillByName(skillName);
+                Skill skill = skillService.findOrCreateSkillByName(skillName, categoryName); // Передаем категорию
                 skillsToAdd.add(skill);
             }
 
             // Получаем текущие навыки вопроса
             Set<Skill> existingSkills = question.getSkills();
 
-            // Обновляем навыки вопроса, добавляя новые, которые ещё не связаны с вопросом
+            // Обновляем навыки вопроса, добавляя новые, которые еще не связаны с вопросом
             for (Skill skill : skillsToAdd) {
                 if (!existingSkills.contains(skill)) {
                     existingSkills.add(skill);
@@ -102,12 +105,15 @@ public class QuestionServiceImpl implements QuestionService {
             }
 
             // Сохраняем изменения
+            question.setSkills(existingSkills); // Устанавливаем обновленные навыки
             questionRepository.save(question);  // Обновляем вопрос с навыками
-            skillRepository.saveAll(skillsToAdd); // Сохраняем изменения в навыках
+
+            // Сохраняем изменения в навыках
+            skillRepository.saveAll(skillsToAdd);
 
             // Добавляем навыки к работе
             for (Skill skill : skillsToAdd) {
-               skillService.addSkillToJob(job.getId(), skill.getName());
+                skillService.addSkillToJob(job.getId(), skill.getName());
             }
         }
     }
@@ -147,22 +153,25 @@ public class QuestionServiceImpl implements QuestionService {
 
     @Transactional
     @Override
-    public QuestionResponse findNextQuestion(Long currentQuestionId, Long skillId, Long jobId) {
-        // Найти следующий вопрос по текущему вопросу, skillId и jobId
-        Question nextQuestion = findNextQuestionInCurrentSkill(currentQuestionId, skillId, jobId);
+    public QuestionResponse findNextQuestion(Long currentQuestionId, Long skillId, Long jobId, Long categoryId) {
+        // Найти следующий вопрос по текущему вопросу, skillId, jobId и categoryId
+        Question nextQuestion = findNextQuestionInCategory(currentQuestionId, skillId, jobId, categoryId);
         if (nextQuestion != null) {
             return QuestionResponseMapper.toQuestionResponse(nextQuestion);
         }
         return null;
     }
 
-    private Question findNextQuestionInCurrentSkill(Long currentQuestionId, Long skillId, Long jobId) {
-        List<Question> questions = questionRepository.findQuestionsForSkill(skillId, jobId);
-        // Найти следующий вопрос в списке
-        return questions.stream()
-                .filter(q -> q.getId() > currentQuestionId)
-                .findFirst()
-                .orElse(null);
+    private Question findNextQuestionInCategory(Long currentQuestionId, Long skillId, Long jobId, Long categoryId) {
+        // Найти все вопросы для данного skillId и jobId, которые относятся к categoryId
+        List<Question> questions = questionRepository.findQuestionsBySkillIdAndJobIdAndCategoryId(skillId, jobId, categoryId);
+
+        // Сортировка вопросов по идентификатору (или по другому критерию) и поиск следующего вопроса
+        Optional<Question> nextQuestion = questions.stream()
+                .filter(q -> q.getId() > currentQuestionId) // Предполагается, что вопросы имеют упорядоченный ID
+                .findFirst();
+
+        return nextQuestion.orElse(null);
     }
     @Transactional
     public QuestionResponse getPreviousQuestion(Long skillId, Long jobId, Long currentQuestionId) {

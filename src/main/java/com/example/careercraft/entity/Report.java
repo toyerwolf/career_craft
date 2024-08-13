@@ -37,4 +37,9 @@ public class Report {
 
     @Enumerated(EnumType.STRING)
     private SkillLevel skillLevel;
+
+    private boolean valid;
+
+    @ManyToOne
+    private Category category;
 }

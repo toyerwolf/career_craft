@@ -25,6 +25,8 @@ public class QuestionRequest {
 
     private Integer orderValue;
 
+    private String categoryName;
+
 //    public void setSkillIds(List<Long> skillIds) {
 //        if (skillIds != null) {
 //            Set<Long> uniqueSkillIds = new HashSet<>(skillIds);

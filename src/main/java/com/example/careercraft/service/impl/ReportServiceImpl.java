@@ -1,47 +1,79 @@
 package com.example.careercraft.service.impl;
 
+import com.example.careercraft.dto.AggregatedReportDto;
+import com.example.careercraft.dto.CustomerInfo;
 import com.example.careercraft.dto.QuestionAnswerDto;
 import com.example.careercraft.dto.ReportDto;
 import com.example.careercraft.entity.*;
 import com.example.careercraft.exception.AlreadyExistException;
 import com.example.careercraft.exception.NotFoundException;
 import com.example.careercraft.repository.*;
+import com.example.careercraft.service.AuthService;
 import com.example.careercraft.service.ReportService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
 import java.math.RoundingMode;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class ReportServiceImpl implements ReportService {
 
-    private final UserAnswerRepository userAnswerRepository;
-    private final QuestionRepository questionRepository;
-    private final ReportRepository reportRepository;
-    private final SkillRepository skillRepository;
-    private final CustomerFinderService customerFinderService;
-    @Transactional
+
+    private SkillRepository skillRepository;
+
+    private final AuthService authService;
+
+
+    private UserAnswerRepository userAnswerRepository;
+
+
+    private ReportRepository reportRepository;
+
+
+    private QuestionRepository questionRepository;
+
+
+    private CustomerFinderService customerFinderService;
+
+    private CategoryRepository categoryRepository;
+    private final AggregatedReportRepository aggregatedReportRepository;
+
     @Override
-    public List<ReportDto> generateReportForSkills(Long customerId, List<Long> skillIds) {
+    public List<AggregatedReportDto> generateReportForSkills(Long customerId, Long categoryId) {
         Customer customer = customerFinderService.getCustomer(customerId);
+        List<Skill> skillsInCategory = skillRepository.findByCategoryId(categoryId);
         List<UserAnswer> userAnswers = userAnswerRepository.findByCustomerId(customerId);
         Map<Long, List<UserAnswer>> answersBySkill = groupAnswersBySkill(userAnswers);
 
-        return skillIds.stream()
-                .filter(answersBySkill::containsKey)
-                .map(skillId -> generateReportForSkill(customerId, skillId, answersBySkill.get(skillId)))
+        List<ReportDto> individualReports = skillsInCategory.stream()
+                .map(skill -> generateReportForSkill(customerId, skill.getId(), answersBySkill.get(skill.getId()), categoryId))
                 .filter(Optional::isPresent)
                 .map(Optional::get)
                 .collect(Collectors.toList());
+
+        // Агрегируем отчеты по категориям
+        List<AggregatedReportDto> aggregatedReports = aggregateReportsByCategory(individualReports, customerId);
+
+        // Сохраняем агрегированные отчеты
+        saveAggregatedReports(aggregatedReports);
+
+        return aggregatedReports;
+    }
+
+    public AggregatedReportDto getAggregatedReportForCategory(String authHeader, Long categoryId) {
+        CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
+        AggregatedReport aggregatedReport = aggregatedReportRepository.findByCustomerIdAndCategoryIdAndValid(customerInfo.getId(), categoryId, true)
+                .orElseThrow(() -> new NotFoundException("Valid aggregated report not found for customerId: " + customerInfo.getId() + " and categoryId: " + categoryId));
+
+        return convertToAggregatedReportDto(aggregatedReport);
     }
 
     private Map<Long, List<UserAnswer>> groupAnswersBySkill(List<UserAnswer> userAnswers) {
@@ -49,38 +81,89 @@ public class ReportServiceImpl implements ReportService {
                 .collect(Collectors.groupingBy(answer -> answer.getSkill().getId()));
     }
 
-    private Skill getSkillById(Long skillId) {
-        return skillRepository.findById(skillId)
-                .orElseThrow(() -> new NotFoundException("Skill not found with id: " + skillId));
-    }
-
-    private Optional<ReportDto> generateReportForSkill(Long customerId, Long skillId, List<UserAnswer> answersForSkill) {
+    private Optional<ReportDto> generateReportForSkill(Long customerId, Long skillId, List<UserAnswer> answersForSkill, Long categoryId) {
         try {
-            Skill skill = getSkillById(skillId);
-//            ensureReportDoesNotExist(customerId, skillId);
-            Report report = createReport(customerId, answersForSkill, skill);
+            Skill skill = skillRepository.findById(skillId)
+                    .orElseThrow(() -> new NotFoundException("Skill not found with id: " + skillId));
+            log.info("Generating report for customerId: {}, skillId: {}, categoryId: {}", customerId, skillId, categoryId);
+            invalidateExistingReportsForSkill(customerId, skillId, categoryId);
+            Report report = createReport(customerId, answersForSkill, skill, categoryId);
+            log.info("Report created: {}", report);
             reportRepository.save(report);
             return Optional.of(convertToReportDto(report, answersForSkill));
         } catch (AlreadyExistException e) {
-            // Log or handle exception if needed
+            log.warn("Report already exists for skillId: {}, categoryId: {}, customerId: {}", skillId, categoryId, customerId);
             return Optional.empty();
+        } catch (Exception e) {
+            log.error("Error generating report for skillId: {}, categoryId: {}, customerId: {}", skillId, categoryId, customerId, e);
+            throw e;
         }
     }
 
-//    private void ensureReportDoesNotExist(Long customerId, Long skillId) {
-//        if (reportRepository.existsByCustomerIdAndSkillId(customerId, skillId)) {
-//            throw new AlreadyExistException("Report for skill ID " + skillId + " already exists for customer ID " + customerId);
-//        }
-//    }
+    private Report createReport(Long customerId, List<UserAnswer> userAnswers, Skill skill, Long categoryId) {
+        log.info("Creating report with customerId: {}, skillId: {}, categoryId: {}", customerId, skill.getId(), categoryId);
 
-    private Report createReport(Long customerId, List<UserAnswer> userAnswers, Skill skill) {
         BigDecimal totalScore = calculateTotalScore(userAnswers);
         long totalQuestionsForSkill = countTotalQuestionsForSkill(skill);
         double percentageCorrect = calculatePercentageCorrect(totalScore, totalQuestionsForSkill);
         SkillLevel skillLevel = determineSkillLevel(percentageCorrect);
         Customer customer = customerFinderService.getCustomer(customerId);
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new NotFoundException("Category not found with id: " + categoryId));
 
-        return buildReport(customer, userAnswers, skill, totalScore, percentageCorrect, skillLevel);
+        Report report = buildReport(customer, userAnswers, skill, totalScore, percentageCorrect, skillLevel, category);
+        report.setValid(true);
+        log.info("Report built: {}", report);
+
+        return report;
+    }
+
+    private void invalidateExistingReportsForSkill(Long customerId, Long skillId, Long categoryId) {
+        List<Report> existingReports = reportRepository.findByCustomerIdAndSkillIdAndCategoryId(customerId, skillId, categoryId);
+        for (Report report : existingReports) {
+            report.setValid(false);
+        }
+        reportRepository.saveAll(existingReports);
+    }
+
+    private Report buildReport(Customer customer, List<UserAnswer> userAnswers, Skill skill,
+                               BigDecimal totalScore, double percentageCorrect, SkillLevel skillLevel, Category category) {
+        Report report = new Report();
+        report.setCustomer(customer);
+        report.setJob(userAnswers.get(0).getQuestion().getJob());
+        report.setSkill(skill);
+        report.setScore(totalScore);
+        report.setPercentageCorrect(percentageCorrect);
+        report.setSkillLevel(skillLevel);
+        report.setUserAnswers(userAnswers);
+        report.setCategory(category); // Устанавливаем категорию
+        return report;
+    }
+
+    private AggregatedReportDto createAggregatedReport(Long categoryId, List<ReportDto> reports, Long customerId) {
+        AggregatedReportDto aggregatedReport = new AggregatedReportDto();
+        aggregatedReport.setCategoryId(categoryId);
+        aggregatedReport.setCustomerId(customerId);
+
+        BigDecimal totalScore = reports.stream()
+                .map(ReportDto::getScore)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        aggregatedReport.setTotalScore(totalScore.doubleValue());
+
+        double averagePercentageCorrect = reports.stream()
+                .mapToDouble(ReportDto::getPercentageCorrect)
+                .average()
+                .orElse(0.0);
+
+        // Округление averagePercentageCorrect до двух знаков после запятой
+        BigDecimal roundedAveragePercentageCorrect = BigDecimal.valueOf(averagePercentageCorrect)
+                .setScale(2, RoundingMode.HALF_UP);
+        aggregatedReport.setAveragePercentageCorrect(roundedAveragePercentageCorrect.doubleValue());
+
+        String averageSkillLevel = determineAverageSkillLevel(reports);
+        aggregatedReport.setSkillLevel(averageSkillLevel);
+
+        return aggregatedReport;
     }
 
     private BigDecimal calculateTotalScore(List<UserAnswer> userAnswers) {
@@ -99,38 +182,6 @@ public class ReportServiceImpl implements ReportService {
         return percentage.doubleValue();
     }
 
-    private Report buildReport(Customer customer, List<UserAnswer> userAnswers, Skill skill,
-                               BigDecimal totalScore, double percentageCorrect, SkillLevel skillLevel) {
-        Report report = new Report();
-        report.setCustomer(customer);
-        report.setJob(userAnswers.get(0).getQuestion().getJob());
-        report.setSkill(skill);
-        report.setScore(totalScore);
-        report.setPercentageCorrect(percentageCorrect);
-        report.setSkillLevel(skillLevel);
-        report.setUserAnswers(userAnswers);
-        return report;
-    }
-
-    private ReportDto convertToReportDto(Report report, List<UserAnswer> userAnswers) {
-        ReportDto reportDto = new ReportDto();
-        reportDto.setCustomerId(report.getCustomer().getId());
-        reportDto.setScore(report.getScore());
-        reportDto.setPercentageCorrect(report.getPercentageCorrect());
-        reportDto.setSkillLevel(report.getSkillLevel());
-
-        if (report.getSkill() != null) {
-            reportDto.setSkillId(report.getSkill().getId());
-            reportDto.setSkillName(report.getSkill().getName());
-        }
-
-        // Optionally include question answers if needed
-        // List<QuestionAnswerDto> questionAnswerDtos = getQuestionAnswerDtos(userAnswers);
-        // reportDto.setQuestionAnswers(questionAnswerDtos);
-
-        return reportDto;
-    }
-
     private SkillLevel determineSkillLevel(double percentageCorrect) {
         String level = switch ((int) percentageCorrect / 10) {
             case 9 -> "EXPERT";
@@ -141,6 +192,97 @@ public class ReportServiceImpl implements ReportService {
 
         return SkillLevel.valueOf(level);
     }
+
+    private final Map<SkillLevel, Integer> skillLevelMap = Map.of(
+            SkillLevel.EXPERT, 4,
+            SkillLevel.ADVANCED, 3,
+            SkillLevel.INTERMEDIATE, 2,
+            SkillLevel.BEGINNER, 1
+    );
+
+    private String determineAverageSkillLevel(List<ReportDto> reports) {
+        double averageLevel = reports.stream()
+                .mapToInt(report -> skillLevelMap.getOrDefault(SkillLevel.valueOf(String.valueOf(report.getSkillLevel())), 1))
+                .average()
+                .orElse(1);
+
+        return skillLevelMap.entrySet().stream()
+                .filter(entry -> entry.getValue() == (int) Math.round(averageLevel))
+                .map(Map.Entry::getKey)
+                .map(SkillLevel::name)
+                .findFirst()
+                .orElse("BEGINNER");
+    }
+
+    private ReportDto convertToReportDto(Report report, List<UserAnswer> userAnswers) {
+        ReportDto reportDto = new ReportDto();
+        reportDto.setCustomerId(report.getCustomer().getId());
+        reportDto.setScore(report.getScore());
+        reportDto.setPercentageCorrect(report.getPercentageCorrect());
+        reportDto.setSkillLevel(SkillLevel.valueOf(report.getSkillLevel().name()));
+
+        if (report.getSkill() != null) {
+            reportDto.setSkillId(report.getSkill().getId());
+            reportDto.setSkillName(report.getSkill().getName());
+        }
+
+        reportDto.setCategoryId(report.getCategory().getId());
+        reportDto.setCategoryName(report.getCategory().getName());
+
+        return reportDto;
+    }
+
+    private List<AggregatedReportDto> aggregateReportsByCategory(List<ReportDto> individualReports, Long customerId) {
+        Map<Long, List<ReportDto>> reportsByCategory = individualReports.stream()
+                .collect(Collectors.groupingBy(ReportDto::getCategoryId));
+
+        return reportsByCategory.entrySet().stream()
+                .map(entry -> createAggregatedReport(entry.getKey(), entry.getValue(), customerId))
+                .collect(Collectors.toList());
+    }
+
+    private void saveAggregatedReports(List<AggregatedReportDto> aggregatedReportsDto) {
+        List<AggregatedReport> aggregatedReports = aggregatedReportsDto.stream()
+                .map(dto -> {
+                    AggregatedReport report = new AggregatedReport();
+                    report.setCustomerId(dto.getCustomerId());
+                    report.setCategoryId(dto.getCategoryId());
+                    report.setTotalScore(dto.getTotalScore());
+                    report.setAveragePercentageCorrect(dto.getAveragePercentageCorrect());
+                    report.setSkillLevel(dto.getSkillLevel());
+                    report.setValid(true); // устанавливаем как действительный
+                    return report;
+                })
+                .collect(Collectors.toList());
+
+        // Обновление старых отчетов как недействительных
+        invalidateExistingReports(aggregatedReportsDto);
+
+        aggregatedReportRepository.saveAll(aggregatedReports);
+    }
+
+    private void invalidateExistingReports(List<AggregatedReportDto> newReports) {
+        for (AggregatedReportDto newReport : newReports) {
+            List<AggregatedReport> existingReports = aggregatedReportRepository.findByCustomerIdAndCategoryId(newReport.getCustomerId(), newReport.getCategoryId());
+            for (AggregatedReport report : existingReports) {
+                report.setValid(false);
+            }
+            aggregatedReportRepository.saveAll(existingReports);
+        }
+    }
+
+
+
+    private AggregatedReportDto convertToAggregatedReportDto(AggregatedReport aggregatedReport) {
+        AggregatedReportDto dto = new AggregatedReportDto();
+        dto.setCustomerId(aggregatedReport.getCustomerId());
+        dto.setCategoryId(aggregatedReport.getCategoryId());
+        dto.setTotalScore(aggregatedReport.getTotalScore());
+        dto.setAveragePercentageCorrect(aggregatedReport.getAveragePercentageCorrect());
+        dto.setSkillLevel(aggregatedReport.getSkillLevel());
+        return dto;
+    }
+
 
 
     public Long getReportId(List<Long> skillIds) {

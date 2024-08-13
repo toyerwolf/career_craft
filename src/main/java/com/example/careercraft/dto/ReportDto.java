@@ -16,5 +16,7 @@ public class ReportDto {
     private String skillName;
 
     private SkillLevel skillLevel;
+    private Long categoryId;
+    private String categoryName;
 
 }

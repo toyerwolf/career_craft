@@ -64,9 +64,11 @@ public class QuestionController {
     public ResponseEntity<QuestionResponse> getNextQuestion(
             @RequestParam("currentQuestionId") Long currentQuestionId,
             @RequestParam("skillId") Long skillId,
-            @RequestParam("jobId") Long jobId) { // Добавлен параметр jobId
+            @RequestParam("jobId") Long jobId,
+            @RequestParam("categoryId") Long categoryId)
+    { // Добавлен параметр jobId
         // Вызов метода сервиса, который может выбросить исключение
-        QuestionResponse questionResponse = questionService.findNextQuestion(currentQuestionId, skillId, jobId);
+        QuestionResponse questionResponse = questionService.findNextQuestion(currentQuestionId, skillId, jobId,categoryId);
         return ResponseEntity.ok(questionResponse);
     }
 

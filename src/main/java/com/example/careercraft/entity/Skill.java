@@ -45,4 +45,8 @@ public class Skill {
                 ", numberOfQuestions=" + (questions != null ? questions.size() : 0) +
                 '}';
     }
+
+    @ManyToOne
+    @JoinColumn(name = "category_id", nullable = false)
+    private Category category; // Категория навыка
 }

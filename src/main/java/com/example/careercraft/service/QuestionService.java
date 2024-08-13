@@ -23,7 +23,7 @@ public interface QuestionService {
 
     SkillQuestionResponse findQuestionsGroupedBySkills(Collection<Long> skillIds,Long jobId, Long id);
 
-    public QuestionResponse findNextQuestion(Long currentQuestionId, Long skillId, Long jobId);
+    public QuestionResponse findNextQuestion(Long currentQuestionId, Long skillId, Long jobId, Long categoryId);
 
     public QuestionResponse getPreviousQuestion(Long skillId, Long jobId, Long currentQuestionId);
 

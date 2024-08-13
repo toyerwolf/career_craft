@@ -9,4 +9,6 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer,Long> {
     List<UserAnswer> findByCustomerId(Long userId);
 
     boolean existsByCustomerIdAndQuestionId(Long id, Long id1);
+
+
 }

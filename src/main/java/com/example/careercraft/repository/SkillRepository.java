@@ -22,4 +22,6 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
 
     @Query("SELECT r.id FROM Report r WHERE r.skill.id IN :skillIds")
     List<Long> findReportIdsBySkillIds(List<Long> skillIds);
+
+    List<Skill> findByCategoryId(Long id);
 }

@@ -83,5 +83,16 @@ public interface QuestionRepository extends JpaRepository<Question,Long> {
     @Query("SELECT q.id FROM Question q")
     List<Long> findAllQuestionIds();
 
+    @Query("SELECT q FROM Question q " +
+            "JOIN q.skills s " +
+            "WHERE s.id = :skillId " +
+            "AND q.job.id = :jobId " +
+            "AND s.category.id = :categoryId " +
+            "ORDER BY q.id")
+    List<Question> findQuestionsBySkillIdAndJobIdAndCategoryId(
+            @Param("skillId") Long skillId,
+            @Param("jobId") Long jobId,
+            @Param("categoryId") Long categoryId);
+
 }
 

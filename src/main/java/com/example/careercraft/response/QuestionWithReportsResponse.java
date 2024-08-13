@@ -1,5 +1,6 @@
 package com.example.careercraft.response;
 
+import com.example.careercraft.dto.AggregatedReportDto;
 import com.example.careercraft.dto.ReportDto;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import lombok.AllArgsConstructor;
@@ -20,5 +21,5 @@ public class QuestionWithReportsResponse {
     private String text;
     private Long jobId; // Идентификатор работы, к которой относится вопрос
     private List<AnswerResponse> answers;
-    private List<ReportDto> reports;
+    private List<AggregatedReportDto> reports;;
 }
