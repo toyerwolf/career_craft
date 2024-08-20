@@ -20,8 +20,9 @@ public class AnswerController {
 
 
 
-    @GetMapping("/question/{questionId}")
+
     @Secured("USER")
+    @GetMapping("/question/{questionId}")
     public List<AnswerResponse> getAnswersByQuestionId(@PathVariable Long questionId) {
         return answerService.getAnswersByQuestionId(questionId);
     }

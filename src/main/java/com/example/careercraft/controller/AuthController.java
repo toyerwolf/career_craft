@@ -5,8 +5,7 @@ import com.example.careercraft.dto.LoginDto;
 import com.example.careercraft.service.AuthService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.security.oauth2.core.user.OAuth2User;
+
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -23,9 +22,16 @@ public class AuthController {
     }
 
     @PostMapping("/refresh-token")
-    public ResponseEntity<JwtResponse> refreshAccessToken(@RequestHeader("Authorization") String authorizationHeader) {
+    public ResponseEntity<JwtResponse> refreshAccessToken(
+            @RequestHeader("Authorization") String authorizationHeader,
+            @RequestHeader("Refresh-Token") String refreshToken) {
+
+
         String oldToken = authorizationHeader.substring("Bearer ".length());
-        JwtResponse jwtResponse = authService.refreshAccessTokenAndGenerateNewToken(oldToken);
+
+        // Вызываем метод сервиса с обоими токенами
+        JwtResponse jwtResponse = authService.refreshAccessTokenAndGenerateNewToken(oldToken, refreshToken);
+
         return ResponseEntity.ok(jwtResponse);
     }
 

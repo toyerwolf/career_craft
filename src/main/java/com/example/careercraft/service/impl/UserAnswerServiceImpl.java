@@ -71,13 +71,10 @@ public class UserAnswerServiceImpl implements UserAnswerService {
         // Проверка, остались ли вопросы в категории
         if (areQuestionsRemainingInCategory(customer, category)) {
             // Если есть оставшиеся вопросы, найти следующий вопрос
-            QuestionResponse nextQuestion = findNextQuestionInCategory(customer, category);
-            return buildQuestionResponse(nextQuestion);
+            return findNextQuestionInCategory(customer, category);
         } else {
             // Если вопросов больше нет, возвращаем сообщение о завершении теста
-            return QuestionResponse.builder()
-                    .message("Test Completed for Category!")
-                    .build();
+            return getTestCompletionResponse();
         }
     }
 
@@ -96,15 +93,15 @@ public class UserAnswerServiceImpl implements UserAnswerService {
                 .filter(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId())) // Исключаем уже отвеченные вопросы
                 .findFirst(); // Найти первый оставшийся вопрос
 
-        // Формирование ответа
         if (nextQuestion.isPresent()) {
             Question q = nextQuestion.get();
+            Skill nextSkill = getSkill(q); // Получаем навык для следующего вопроса
+
             // Возвращаем вопрос в формате QuestionResponse
-            return buildQuestionResponse(q);
+            return buildQuestionResponse(q, nextSkill);
         } else {
             // Если вопросов больше нет, возвращаем сообщение о завершении теста
             return getTestCompletionResponse();
-
         }
     }
 
@@ -129,22 +126,26 @@ public class UserAnswerServiceImpl implements UserAnswerService {
         return false; // Вопросов больше нет
     }
 
+
+
+
     private Category getCategory(Skill skill) {
         return Optional.ofNullable(skill.getCategory())
                 .orElseThrow(() -> new NotFoundException("No category found for the skill"));
     }
 
-    private QuestionResponse buildQuestionResponse(Question question) {
+    private QuestionResponse buildQuestionResponse(Question question, Skill skill) {
         return QuestionResponse.builder()
+                .header("Skill: " + skill.getName()) // Заголовок с названием навыка
                 .id(question.getId())
                 .text(question.getText())
                 .answers(question.getAnswers().stream()
                         .map(answer -> AnswerResponse.builder()
                                 .id(answer.getId())
                                 .text(answer.getText())
-                                .score(answer.getScore()).
-                                priority(answer.getPriority()).
-                                orderValue(answer.getOrderValue())
+                                .score(answer.getScore())
+                                .priority(answer.getPriority())
+                                .orderValue(answer.getOrderValue())
                                 .build())
                         .collect(Collectors.toList()))
                 .build();

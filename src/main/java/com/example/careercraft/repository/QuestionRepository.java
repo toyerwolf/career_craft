@@ -48,6 +48,21 @@ public interface QuestionRepository extends JpaRepository<Question,Long> {
             @Param("currentQuestionId") Long currentQuestionId,
             Pageable pageable);
 
+
+    @Query("SELECT q FROM Question q " +
+            "JOIN q.skills s " +
+            "WHERE s.category.id = :categoryId " +
+            "AND s.id IN :skillIds " +
+            "AND q.job.id = :jobId " +
+            "AND q.id = :id " +
+            "ORDER BY q.id ASC")
+    List<Question> findFirstQuestionByCategoryAndSkills(
+            @Param("categoryId") Long categoryId,
+            @Param("skillIds") Collection<Long> skillIds,
+            @Param("jobId") Long jobId,
+            @Param("id") Long id,
+            Pageable pageable);
+
     Optional<Question> findByText(String text);
 
     boolean existsByText(String text);
@@ -94,5 +109,7 @@ public interface QuestionRepository extends JpaRepository<Question,Long> {
             @Param("jobId") Long jobId,
             @Param("categoryId") Long categoryId);
 
+    @Query("SELECT q FROM Question q LEFT JOIN FETCH q.skills s LEFT JOIN FETCH s.category WHERE q.skills IS NOT EMPTY AND s.category.id = :categoryId")
+    List<Question> findQuestionsByCategory(@Param("categoryId") Long categoryId);
 }
 

@@ -15,14 +15,19 @@ public class SkillAssessmentController {
     private final SkillAssessmentService skillAssessmentService;
 
 
-    @PostMapping
+
+
+
     @Secured("USER")
+    @PostMapping
+
     public ResponseEntity<Void> saveAssessment(@RequestBody SkillAssessmentDto assessmentDto) {
         skillAssessmentService.saveAssessment(assessmentDto);
         return ResponseEntity.ok().build();
     }
 
-    // Получение оценки навыка по userId и skillId
+
+    @Secured("USER")
     @GetMapping("/{customerID}/{skillId}")
     public ResponseEntity<SkillAssessmentDto> getAssessment(
             @PathVariable Long customerID,

@@ -46,6 +46,18 @@ public class ReportController {
         return ResponseEntity.ok(aggregatedReportDto);
     }
 
+    @GetMapping("/category/{categoryId}")
+    @Secured("USER")
+    public ResponseEntity<List<ReportDto>> getAllReportsForCategoryAndCustomer(
+            @RequestHeader("Authorization") String authHeader,
+            @PathVariable Long categoryId) {
+
+        // Получение всех отчетов по категории для определенного пользователя
+        List<ReportDto> reports = reportService.getAllReportsForCategoryAndCustomer(authHeader, categoryId);
+
+        return ResponseEntity.ok(reports);
+    }
+
 }
 
 

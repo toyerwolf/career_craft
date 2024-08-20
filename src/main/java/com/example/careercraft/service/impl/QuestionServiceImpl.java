@@ -9,6 +9,7 @@ import com.example.careercraft.exception.NotFoundException;
 
 import com.example.careercraft.mapper.QuestionResponseMapper;
 import com.example.careercraft.mapper.SkillQuestionResponseMapper;
+import com.example.careercraft.mapper.SkillResponseMapperForCategory;
 import com.example.careercraft.repository.JobRepository;
 import com.example.careercraft.repository.QuestionRepository;
 import com.example.careercraft.repository.SkillRepository;
@@ -16,6 +17,7 @@ import com.example.careercraft.req.AnswerRequest;
 import com.example.careercraft.req.QuestionRequest;
 
 import com.example.careercraft.response.AnswerResponse;
+import com.example.careercraft.response.DetailedSkillQuestionResponse;
 import com.example.careercraft.response.QuestionResponse;
 
 import com.example.careercraft.service.AnswerService;
@@ -56,7 +58,8 @@ public class QuestionServiceImpl implements QuestionService {
         checkQuestionExists(questionRequest.getText());
         Question question = createQuestion(questionRequest, job);
         createAndSetAnswers(question, questionRequest.getAnswers());
-        // Используем categoryName из questionRequest
+//        Category category = categoryService.findOrCreateCategoryByName(questionRequest.getCategoryName());
+//        question.setCategory(category);
         processSkills(question, questionRequest.getSkillNames(), job, questionRequest.getCategoryName());
         return QuestionResponseMapper.toQuestionResponse(question);
     }
@@ -151,6 +154,48 @@ public class QuestionServiceImpl implements QuestionService {
         return SkillQuestionResponseMapper.toSkillQuestionResponse(Optional.ofNullable(questions.get(0)));
     }
 
+    @Transactional
+    public DetailedSkillQuestionResponse findFirstQuestionsFromCategoryAndSkills(
+            Collection<Long> skillIds,
+            Long jobId,
+            Long categoryId) {
+
+        // Находим все вопросы из категории
+        List<Question> questionsInCategory = questionRepository.findQuestionsByCategory(categoryId);
+
+        // Проверяем наличие вопросов
+        checkQuestionsExist(questionsInCategory);
+
+        // Находим первый вопрос для любого навыка
+        Question firstQuestion = findFirstQuestionBySkills(questionsInCategory, skillIds);
+
+        // Проверяем, существует ли Job
+        checkJobExists(firstQuestion, jobId);
+
+        // Преобразуем первый вопрос в DetailedSkillQuestionResponse
+        return SkillResponseMapperForCategory.toDetailedSkillQuestionResponse(Optional.of(firstQuestion));
+    }
+
+
+    private void checkQuestionsExist(List<Question> questionsInCategory) {
+        if (questionsInCategory.isEmpty()) {
+            throw new NotFoundException("No questions found for the given category ID.");
+        }
+    }
+
+    private void checkJobExists(Question question, Long jobId) {
+        if (question.getJob() == null || !Objects.equals(question.getJob().getId(), jobId)) {
+            throw new NotFoundException("Job with the specified ID does not exist.");
+        }
+    }
+
+    private Question findFirstQuestionBySkills(List<Question> questionsInCategory, Collection<Long> skillIds) {
+        return questionsInCategory.stream()
+                .filter(question -> question.getSkills().stream()
+                        .anyMatch(skill -> skillIds.contains(skill.getId())))
+                .findFirst()
+                .orElseThrow(() -> new NotFoundException("No questions found for the specified skills in the given category."));
+    }
     @Transactional
     @Override
     public QuestionResponse findNextQuestion(Long currentQuestionId, Long skillId, Long jobId, Long categoryId) {

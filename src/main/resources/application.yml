@@ -1,5 +1,5 @@
 server:
-  port: 8080
+  port: 8070
 
 spring:
   profiles:
@@ -12,7 +12,7 @@ spring:
       max-request-size: 10MB
 
 jwtSecret: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9123saddsaA2sdGgfsa
-jwtExpirationInMs: 3600000
+jwtExpirationInMs: 36000
 refreshTokenExpiration: 6000000
 
 jwt:

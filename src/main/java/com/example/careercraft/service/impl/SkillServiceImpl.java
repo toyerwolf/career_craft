@@ -26,32 +26,46 @@ public class SkillServiceImpl  implements SkillService {
 
 
     public Skill findOrCreateSkillByName(String skillName, String categoryName) {
-        Category category = categoryService.findOrCreateCategoryByName(categoryName);
-        return skillRepository.findByName(skillName)
+        // Приведение строк к нижнему регистру
+        String lowerCaseSkillName = skillName.trim().toLowerCase();
+        String lowerCaseCategoryName = categoryName.trim().toLowerCase();
+
+        Category category = categoryService.findOrCreateCategoryByName(lowerCaseCategoryName);
+        return skillRepository.findByName(lowerCaseSkillName)
                 .map(skill -> {
-                    skill.setCategory(category);
+                    // Обновляем категорию, если она была изменена
+                    if (!skill.getCategory().getName().equals(lowerCaseCategoryName)) {
+                        skill.setCategory(category);
+                        return skillRepository.save(skill); // Сохраняем изменения
+                    }
                     return skill;
                 })
-                .orElseGet(() -> createSkill(skillName, category));
+                .orElseGet(() -> createSkill(lowerCaseSkillName, category));
     }
 
-   public Skill createSkill(String skillName, Category category) {
+    public Skill createSkill(String skillName, Category category) {
+        String lowerCaseSkillName = skillName.trim().toLowerCase(); // Приведение к нижнему регистру
         Skill skill = new Skill();
-        skill.setName(skillName);
+        skill.setName(lowerCaseSkillName);
         skill.setCategory(category);
         return skillRepository.save(skill);
     }
     @Transactional
     public void addSkillToJob(Long jobId, String skillName) {
+        // Приведение строки к нижнему регистру
+        String lowerCaseSkillName = skillName.trim().toLowerCase();
+
         Job job = jobFinderService.findJobById(jobId);
-        Skill skill = skillRepository.findByName(skillName)
+        Skill skill = skillRepository.findByName(lowerCaseSkillName)
                 .orElseGet(() -> {
                     Skill newSkill = new Skill();
-                    newSkill.setName(skillName);
+                    newSkill.setName(lowerCaseSkillName);
                     return skillRepository.save(newSkill);
                 });
-        job.addSkill(skill);
-        jobRepository.save(job); // Сохраняем изменения в Job
+        if (!job.getSkills().contains(skill)) {
+            job.addSkill(skill);
+            jobRepository.save(job); // Сохраняем изменения в Job
+        }
     }
 
     public List<SkillDTO> getAllSkills() {

@@ -92,7 +92,13 @@ public class JwtTokenProvider {
         } catch (MalformedJwtException ex) {
             logger.error("Invalid JWT token: {}", ex.getMessage());
         } catch (ExpiredJwtException ex) {
-            logger.error("Expired JWT token: {}", ex.getMessage());
+            // Извлечение времени истечения токена
+            Claims claims = ex.getClaims();
+            if (claims != null && claims.getExpiration() != null) {
+                logger.error("Expired JWT token. Expiration time: {}", claims.getExpiration());
+            } else {
+                logger.error("Expired JWT token: {}", ex.getMessage());
+            }
         } catch (UnsupportedJwtException ex) {
             logger.error("Unsupported JWT token: {}", ex.getMessage());
         } catch (IllegalArgumentException ex) {
@@ -100,6 +106,7 @@ public class JwtTokenProvider {
         }
         return false;
     }
+
 
     public String getUserEmailFromJwtToken(String token) {
         return Jwts.parserBuilder()

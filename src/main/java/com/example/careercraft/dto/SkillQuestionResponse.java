@@ -18,6 +18,7 @@ public class SkillQuestionResponse {
         private String skillName;
         private Job job; // Добавлен Job
         private List<QuestionResponse> questions;
+        private Category category;
 
         // Getters and Setters
     }
@@ -25,6 +26,14 @@ public class SkillQuestionResponse {
 
     @Data
     public static class Job {
+        private Long id;
+        private String name;
+
+        // Getters and Setters
+    }
+
+    @Data
+    public static class Category {
         private Long id;
         private String name;
 

@@ -8,7 +8,7 @@ public interface AuthService {
 
     JwtResponse login(LoginDto loginDto);
 
-    JwtResponse refreshAccessTokenAndGenerateNewToken(String oldToken);
+    public JwtResponse refreshAccessTokenAndGenerateNewToken(String oldToken, String refreshToken);
 
     public CustomerInfo getCustomerDetailsFromToken(String authHeader);
 }

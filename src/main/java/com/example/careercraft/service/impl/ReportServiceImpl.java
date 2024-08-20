@@ -1,14 +1,12 @@
 package com.example.careercraft.service.impl;
 
-import com.example.careercraft.dto.AggregatedReportDto;
-import com.example.careercraft.dto.CustomerInfo;
-import com.example.careercraft.dto.QuestionAnswerDto;
-import com.example.careercraft.dto.ReportDto;
+import com.example.careercraft.dto.*;
 import com.example.careercraft.entity.*;
 import com.example.careercraft.exception.AlreadyExistException;
 import com.example.careercraft.exception.NotFoundException;
 import com.example.careercraft.repository.*;
 import com.example.careercraft.service.AuthService;
+import com.example.careercraft.service.CategoryService;
 import com.example.careercraft.service.ReportService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
@@ -27,24 +25,25 @@ import java.util.stream.Collectors;
 public class ReportServiceImpl implements ReportService {
 
 
-    private SkillRepository skillRepository;
+    private final SkillRepository skillRepository;
 
     private final AuthService authService;
 
 
-    private UserAnswerRepository userAnswerRepository;
+    private final UserAnswerRepository userAnswerRepository;
 
 
-    private ReportRepository reportRepository;
+    private final ReportRepository reportRepository;
 
 
-    private QuestionRepository questionRepository;
+    private final QuestionRepository questionRepository;
 
 
-    private CustomerFinderService customerFinderService;
+    private final CustomerFinderService customerFinderService;
 
-    private CategoryRepository categoryRepository;
+    private final CategoryRepository categoryRepository;
     private final AggregatedReportRepository aggregatedReportRepository;
+    private final CategoryService categoryService;
 
     @Override
     public List<AggregatedReportDto> generateReportForSkills(Long customerId, Long categoryId) {
@@ -74,6 +73,67 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new NotFoundException("Valid aggregated report not found for customerId: " + customerInfo.getId() + " and categoryId: " + categoryId));
 
         return convertToAggregatedReportDto(aggregatedReport);
+    }
+
+    @Override
+    public SkillReportDto getDetailedReportForSkill(String authHeader, Long skillId) {
+        // Получение информации о пользователе на основе токена
+        CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
+
+        // Поиск детализированного отчета по скиллу
+        Report report = reportRepository.findByCustomerIdAndSkillIdAndValid(customerInfo.getId(), skillId, true)
+                .orElseThrow(() -> new NotFoundException("Valid detailed report not found for customerId: "
+                        + customerInfo.getId() + " and skillId: " + skillId));
+
+        // Преобразование отчета в DTO
+        return convertToSkillReportDto(report);
+    }
+
+    public List<ReportDto> getAllReportsForCategoryAndCustomer(String authHeader, Long categoryId) {
+        // Получение информации о пользователе на основе токена
+        CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
+
+        // Поиск всех отчетов для определенной категории и пользователя
+        List<Report> reports = reportRepository.findAllByCustomerIdAndCategoryIdAndValid(customerInfo.getId(), categoryId, true);
+
+        // Преобразование списка отчетов в DTO
+        return reports.stream()
+                .map(this::convertToReportDto)
+                .collect(Collectors.toList());
+    }
+
+    private ReportDto convertToReportDto(Report report) {
+        ReportDto reportDto = new ReportDto();
+
+        // Заполняем поля DTO из сущности Report
+        reportDto.setReportId(report.getId());
+        reportDto.setCustomerId(report.getCustomer().getId());
+        reportDto.setCategoryId(report.getCategory().getId());
+        reportDto.setCategoryName(report.getCategory().getName());
+        reportDto.setSkillId(report.getSkill() != null ? report.getSkill().getId() : null);
+        reportDto.setSkillName(report.getSkill() != null ? report.getSkill().getName() : null);
+        reportDto.setScore(report.getScore());
+        reportDto.setPercentageCorrect(report.getPercentageCorrect());
+        reportDto.setSkillLevel(report.getSkillLevel());
+        reportDto.setValid(report.isValid());
+
+
+
+
+        return reportDto;
+    }
+
+    private SkillReportDto convertToSkillReportDto(Report report) {
+        SkillReportDto dto = new SkillReportDto();
+        dto.setReportId(report.getId());
+        dto.setCustomerId(report.getCustomer().getId());
+        dto.setSkillId(report.getSkill().getId());
+        dto.setSkillName(report.getSkill().getName()); // Устанавливаем название скилла
+        dto.setScore(report.getScore());
+        dto.setPercentageCorrect(report.getPercentageCorrect());
+        dto.setSkillLevel(report.getSkillLevel());
+        dto.setValid(report.isValid());
+        return dto;
     }
 
     private Map<Long, List<UserAnswer>> groupAnswersBySkill(List<UserAnswer> userAnswers) {
@@ -144,7 +204,8 @@ public class ReportServiceImpl implements ReportService {
         AggregatedReportDto aggregatedReport = new AggregatedReportDto();
         aggregatedReport.setCategoryId(categoryId);
         aggregatedReport.setCustomerId(customerId);
-
+        String categoryName = reports.get(0).getCategoryName();
+        aggregatedReport.setCategoryName(categoryName);
         BigDecimal totalScore = reports.stream()
                 .map(ReportDto::getScore)
                 .reduce(BigDecimal.ZERO, BigDecimal::add);
@@ -248,6 +309,7 @@ public class ReportServiceImpl implements ReportService {
                     report.setCustomerId(dto.getCustomerId());
                     report.setCategoryId(dto.getCategoryId());
                     report.setTotalScore(dto.getTotalScore());
+                    report.setCategoryName(dto.getCategoryName());
                     report.setAveragePercentageCorrect(dto.getAveragePercentageCorrect());
                     report.setSkillLevel(dto.getSkillLevel());
                     report.setValid(true); // устанавливаем как действительный
@@ -276,6 +338,8 @@ public class ReportServiceImpl implements ReportService {
     private AggregatedReportDto convertToAggregatedReportDto(AggregatedReport aggregatedReport) {
         AggregatedReportDto dto = new AggregatedReportDto();
         dto.setCustomerId(aggregatedReport.getCustomerId());
+        Category category = categoryService.findById(aggregatedReport.getCategoryId());
+        dto.setCategoryName(category.getName());
         dto.setCategoryId(aggregatedReport.getCategoryId());
         dto.setTotalScore(aggregatedReport.getTotalScore());
         dto.setAveragePercentageCorrect(aggregatedReport.getAveragePercentageCorrect());

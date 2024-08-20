@@ -33,8 +33,9 @@ public class JobController {
         return ResponseEntity.ok(job);
     }
 
-    @PostMapping
+
     @Secured("ADMIN")
+    @PostMapping
     @SecurityRequirement(name = "bearerAuth")
     public ResponseEntity<JobDto> createJob(@RequestBody JobDto jobDto) {
         JobDto createdJob = jobService.createJob(jobDto);

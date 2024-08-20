@@ -40,4 +40,8 @@ public class Question {
         return "Question{id=" + id + ", text='" + text + "'}";
     }
 
+//    @ManyToOne
+//    @JoinColumn(name = "category_id") // Добавление связи с категорией
+//    private Category category;
+
 }

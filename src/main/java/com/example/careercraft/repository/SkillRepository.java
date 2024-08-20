@@ -2,6 +2,7 @@ package com.example.careercraft.repository;
 
 
 import com.example.careercraft.entity.Skill;
+import feign.Param;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
@@ -15,7 +16,8 @@ import java.util.Optional;
 public interface SkillRepository extends JpaRepository<Skill, Long> {
     @NotNull List<Skill> findAllById(@NotNull Iterable<Long> ids);
 
-    Optional<Skill> findByName(String name);
+    @Query("SELECT s FROM Skill s WHERE LOWER(s.name) = LOWER(:name)")
+    Optional<Skill> findByName(@Param("name") String name);
 
     @Query("SELECT s.id FROM Skill s")
     Collection<Long> findAllSkillIds();
@@ -23,5 +25,5 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
     @Query("SELECT r.id FROM Report r WHERE r.skill.id IN :skillIds")
     List<Long> findReportIdsBySkillIds(List<Long> skillIds);
 
-    List<Skill> findByCategoryId(Long id);
+    List<Skill> findByCategoryId(Long categoryId);
 }

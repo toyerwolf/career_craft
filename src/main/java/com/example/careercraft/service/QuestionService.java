@@ -6,6 +6,7 @@ import com.example.careercraft.dto.QuestionIdsDto;
 import com.example.careercraft.dto.SkillQuestionResponse;
 import com.example.careercraft.req.QuestionRequest;
 
+import com.example.careercraft.response.DetailedSkillQuestionResponse;
 import com.example.careercraft.response.QuestionResponse;
 
 import java.util.Collection;
@@ -28,4 +29,9 @@ public interface QuestionService {
     public QuestionResponse getPreviousQuestion(Long skillId, Long jobId, Long currentQuestionId);
 
     public List<QuestionIdsDto> getAllQuestions();
+
+    public DetailedSkillQuestionResponse findFirstQuestionsFromCategoryAndSkills(
+            Collection<Long> skillIds,
+            Long jobId,
+            Long categoryId);
 }

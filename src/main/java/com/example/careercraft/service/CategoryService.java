@@ -7,4 +7,6 @@ public interface CategoryService {
     public Category findOrCreateCategoryByName(String categoryName);
 
    Category createCategory(String categoryName);
+
+    public Category findById(Long categoryId);
 }

@@ -10,6 +10,7 @@ import com.example.careercraft.service.AuthService;
 import com.example.careercraft.service.UserAnswerService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.annotation.Secured;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -20,6 +21,8 @@ public class UserAnswerController {
     private final UserAnswerService userAnswerService;
 
 
+
+    @Secured("USER")
     @PostMapping("/answer")
     public ResponseEntity<QuestionResponse> saveUserAnswer(
             @RequestHeader(value = "Authorization") String authHeader,
@@ -28,6 +31,7 @@ public class UserAnswerController {
         return ResponseEntity.ok(response);
     }
 
+    @Secured("USER")
     @PostMapping("/answerWithReports")
     public ResponseEntity<QuestionWithReportsResponse> saveUserAnswerWithReport(
             @RequestHeader(value = "Authorization") String authHeader,

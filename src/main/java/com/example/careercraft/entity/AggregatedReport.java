@@ -19,6 +19,7 @@ public class AggregatedReport {
     private double averagePercentageCorrect;
     private String skillLevel;
     private boolean valid;
+    private String categoryName;
 
     // Геттеры и сеттеры
 }
