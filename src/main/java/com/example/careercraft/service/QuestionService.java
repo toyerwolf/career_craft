@@ -34,4 +34,10 @@ public interface QuestionService {
             Collection<Long> skillIds,
             Long jobId,
             Long categoryId);
+
+
+    public QuestionResponse updateQuestion(Long jobId, Long questionId, QuestionRequest questionRequest);
+
+    public long getTotalQuestionsCount();
+
 }

@@ -2,10 +2,11 @@ package com.example.careercraft.service;
 
 import com.example.careercraft.dto.SkillAssessmentDto;
 import com.example.careercraft.entity.SkillAssessment;
+import com.example.careercraft.req.SkillAssessmentRequest;
 
 public interface SkillAssessmentService {
 
-   void saveAssessment(SkillAssessmentDto assessmentDto);
+    public SkillAssessmentDto saveAssessment(String authHeader, SkillAssessmentRequest skillAssessmentRequest);
 
-    SkillAssessmentDto getAssessment(Long userId, Long skillId);
+    public SkillAssessmentDto getAssessment(String authHeader, Long skillId);
 }

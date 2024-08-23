@@ -1,8 +1,7 @@
 package com.example.careercraft.controller;
 
-import com.example.careercraft.dto.SkillDTO;
 import com.example.careercraft.response.QuestionResponse;
-import com.example.careercraft.service.SkillService;
+import com.example.careercraft.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -14,23 +13,19 @@ import org.springframework.web.bind.annotation.RestController;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/skills")
+@RequestMapping("/categories")
 @AllArgsConstructor
-public class SkillController {
+public class CategoryController {
+
+    private final CategoryService categoryService;
 
 
-    private  final SkillService skillService;
 
     @Secured("USER")
-    @GetMapping("/{skillId}/questions")
-    public ResponseEntity<List<QuestionResponse>> getAllQuestionsForSkill(
-            @PathVariable("skillId") Long skillId) {
-        List<QuestionResponse> questions = skillService.getAllQuestionsForSkill(skillId);
+    @GetMapping("/{categoryId}/questions")
+    public ResponseEntity<List<QuestionResponse>> getAllQuestionsForCategory(
+            @PathVariable("categoryId") Long categoryId) {
+        List<QuestionResponse> questions = categoryService.getAllQuestionsForCategory(categoryId);
         return ResponseEntity.ok(questions);
-    }
-
-    @GetMapping
-    public List<SkillDTO> getAllSkills() {
-        return skillService.getAllSkills();
     }
 }

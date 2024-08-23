@@ -1,6 +1,7 @@
 package com.example.careercraft.controller;
 
 import com.example.careercraft.dto.SkillAssessmentDto;
+import com.example.careercraft.req.SkillAssessmentRequest;
 import com.example.careercraft.service.SkillAssessmentService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -20,19 +21,23 @@ public class SkillAssessmentController {
 
     @Secured("USER")
     @PostMapping
+    public ResponseEntity<SkillAssessmentDto> saveAssessment(
+            @RequestHeader("Authorization") String authHeader,
+            @RequestBody SkillAssessmentRequest skillAssessmentRequest) {
 
-    public ResponseEntity<Void> saveAssessment(@RequestBody SkillAssessmentDto assessmentDto) {
-        skillAssessmentService.saveAssessment(assessmentDto);
-        return ResponseEntity.ok().build();
+        SkillAssessmentDto savedAssessmentDto = skillAssessmentService.saveAssessment(authHeader, skillAssessmentRequest);
+
+        return ResponseEntity.ok(savedAssessmentDto);
     }
 
 
     @Secured("USER")
-    @GetMapping("/{customerID}/{skillId}")
+    @GetMapping("/{skillId}")
     public ResponseEntity<SkillAssessmentDto> getAssessment(
-            @PathVariable Long customerID,
+            @RequestHeader("Authorization") String authHeader,
             @PathVariable Long skillId) {
-        SkillAssessmentDto assessmentDto = skillAssessmentService.getAssessment(customerID, skillId);
+
+        SkillAssessmentDto assessmentDto = skillAssessmentService.getAssessment(authHeader, skillId);
         return ResponseEntity.ok(assessmentDto);
     }
 }

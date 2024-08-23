@@ -3,9 +3,13 @@ package com.example.careercraft.service.impl;
 import com.example.careercraft.dto.SkillDTO;
 import com.example.careercraft.entity.Category;
 import com.example.careercraft.entity.Job;
+import com.example.careercraft.entity.Question;
 import com.example.careercraft.entity.Skill;
+import com.example.careercraft.mapper.QuestionResponseMapper;
 import com.example.careercraft.repository.JobRepository;
+import com.example.careercraft.repository.QuestionRepository;
 import com.example.careercraft.repository.SkillRepository;
+import com.example.careercraft.response.QuestionResponse;
 import com.example.careercraft.service.CategoryService;
 import com.example.careercraft.service.SkillService;
 import jakarta.transaction.Transactional;
@@ -23,6 +27,7 @@ public class SkillServiceImpl  implements SkillService {
     private final JobRepository jobRepository;
     private final JobFinderService jobFinderService;
     private final CategoryService categoryService;
+    private final QuestionRepository questionRepository;
 
 
     public Skill findOrCreateSkillByName(String skillName, String categoryName) {
@@ -78,5 +83,14 @@ public class SkillServiceImpl  implements SkillService {
         return skillRepository.findAll().stream()
                 .map(Skill::getId)
                 .collect(Collectors.toList());
+    }
+
+
+    public List<QuestionResponse> getAllQuestionsForSkill(Long skillId) {
+        // Получаем все вопросы для указанного skillId
+        List<Question> questions = questionRepository.findBySkillId(skillId);
+        return questions.stream()
+                .map(QuestionResponseMapper::toQuestionResponse)
+                .toList();
     }
 }

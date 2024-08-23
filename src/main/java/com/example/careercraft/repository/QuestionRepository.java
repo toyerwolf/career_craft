@@ -111,5 +111,7 @@ public interface QuestionRepository extends JpaRepository<Question,Long> {
 
     @Query("SELECT q FROM Question q LEFT JOIN FETCH q.skills s LEFT JOIN FETCH s.category WHERE q.skills IS NOT EMPTY AND s.category.id = :categoryId")
     List<Question> findQuestionsByCategory(@Param("categoryId") Long categoryId);
+
+    long count();;
 }
 

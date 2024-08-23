@@ -49,6 +49,17 @@ public class QuestionController {
         QuestionResponse questionResponse=questionService.getQuestionById(questionId);
         return ResponseEntity.ok(questionResponse);
     }
+
+
+    @PutMapping("/jobs/{jobId}/{questionId}")
+    public ResponseEntity<QuestionResponse> updateQuestion(
+            @PathVariable("jobId") Long jobId,
+            @PathVariable("questionId") Long questionId,
+            @RequestBody QuestionRequest questionRequest) {
+
+        QuestionResponse updatedQuestion = questionService.updateQuestion(jobId, questionId, questionRequest);
+        return ResponseEntity.ok(updatedQuestion);
+    }
 //
 //    @GetMapping("/firstQuestionFromSkill")
 //    @Secured("USER")
@@ -121,4 +132,16 @@ public class QuestionController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND).body(null);
         }
     }
+
+
+
+    @Secured("USER")
+    @GetMapping("/count")
+    public ResponseEntity<Long> getTotalQuestionsCount() {
+        long count = questionService.getTotalQuestionsCount();
+        return ResponseEntity.ok(count);
+    }
+
+
+
 }

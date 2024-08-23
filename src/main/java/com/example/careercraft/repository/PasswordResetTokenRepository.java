@@ -15,7 +15,7 @@ import java.util.Optional;
 @Repository
 public interface PasswordResetTokenRepository extends JpaRepository<PasswordResetToken, Long> {
     @Modifying
-    @Query("UPDATE PasswordResetToken t SET t.invalidated = true WHERE t.user = :user AND t.expiryDate < :now")
+    @Query("UPDATE PasswordResetToken p SET p.invalidated = true WHERE p.user = :user AND p.expiryDate < :now")
     void invalidateExpiredTokensByUser(@Param("user") User user, @Param("now") LocalDateTime now);
 
     @Query("SELECT t FROM PasswordResetToken t WHERE t.token = :token")

@@ -1,12 +1,12 @@
-package com.example.careercraft.dto;
+package com.example.careercraft.req;
 
 import com.example.careercraft.entity.SkillLevel;
 import lombok.Data;
 
-@Data
-public class SkillAssessmentDto {
 
-//    private Long customerId;
+@Data
+public class SkillAssessmentRequest {
+
     private Long skillId;
     private SkillLevel skillLevel;
 }

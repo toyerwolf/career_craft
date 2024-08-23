@@ -49,82 +49,147 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     private final AnswerService answerService;
     private final AuthService authService;
     private final SkillRepository skillRepository;
+    private final CategoryRepository categoryRepository;
 
 
     @Transactional
     @Override
     public QuestionResponse saveUserAnswerAndGetNextQuestion(String authHeader, UserAnswerRequest userAnswerRequest) {
-        // Извлечение информации о клиенте из токена
+        // Извлечение информации о клиенте из заголовка авторизации (токена)
         CustomerInfo customerInfo = extractCustomerInfo(authHeader);
 
-        // Получение клиента и вопроса
+        // Получение клиента из базы данных по идентификатору, извлеченному из токена
         Customer customer = getCustomer(customerInfo.getId());
+
+        // Получение вопроса из базы данных по идентификатору, предоставленному в запросе
         Question question = getQuestion(userAnswerRequest.getQuestionId());
 
-        // Обработка ответа пользователя
+        // Извлечение ответа пользователя из запроса по значению порядка (если это некое перечисление)
         Answer answer = getAnswerByOrderValue(question, userAnswerRequest.getOrderValue());
-        Skill skill = getSkill(question);
-        Category category = getCategory(skill); // Получение категории из навыка
 
+        // Получение навыка, к которому относится вопрос
+        Skill skill = getSkill(question);
+
+        // Получение категории, к которой относится навык
+        Category category = getCategory(skill);
+
+        // Обработка ответа пользователя (сохранение в базе данных, обновление статистики и т.д.)
         handleUserAnswer(customer, question, answer, skill);
 
-        // Проверка, остались ли вопросы в категории
-        if (areQuestionsRemainingInCategory(customer, category)) {
-            // Если есть оставшиеся вопросы, найти следующий вопрос
-            return findNextQuestionInCategory(customer, category);
-        } else {
-            // Если вопросов больше нет, возвращаем сообщение о завершении теста
-            return getTestCompletionResponse();
+        // Определение следующего вопроса для пользователя в зависимости от состояния вопросов и навыков
+        return getNextQuestionResponse(customer, skill, category);
+    }
+
+    private QuestionResponse getNextQuestionResponse(Customer customer, Skill currentSkill, Category currentCategory) {
+        // Проверяем, остались ли вопросы в текущем навыке
+        if (areQuestionsRemainingInSkill(customer, currentSkill)) {
+            // Если вопросы остались, находим следующий вопрос в текущем навыке
+            return findNextQuestionInSkill(customer, currentSkill);
         }
+
+        // Если вопросы в текущем навыке закончились, ищем следующий навык в текущей категории
+        Optional<Skill> nextSkill = findNextSkillInCategory(customer, currentCategory);
+        if (nextSkill.isPresent()) {
+            // Если найден следующий навык, находим следующий вопрос в этом навыке
+            return findNextQuestionInSkill(customer, nextSkill.get());
+        }
+
+        // Если не найден следующий навык, ищем следующую категорию
+        Optional<Category> nextCategory = findNextCategory(customer, currentCategory);
+        if (nextCategory.isPresent()) {
+            // Если найдена следующая категория, находим следующий вопрос в этой категории
+            return findNextQuestionInCategory(customer, nextCategory.get());
+        }
+
+        // Если не осталось вопросов ни в одной категории, возвращаем ответ о завершении теста
+        return getTestCompletionResponse();
+    }
+
+    private boolean areQuestionsRemainingInSkill(Customer customer, Skill skill) {
+        // Получаем все вопросы, относящиеся к текущему навыку
+        List<Question> questionsForSkill = questionRepository.findBySkillId(skill.getId());
+        // Проверяем, есть ли среди вопросов те, на которые пользователь еще не ответил
+        return questionsForSkill.stream()
+                .anyMatch(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId()));
+    }
+
+    private QuestionResponse findNextQuestionInSkill(Customer customer, Skill skill) {
+        // Получаем все вопросы для текущего навыка
+        List<Question> questionsForSkill = questionRepository.findBySkillId(skill.getId());
+        // Находим первый вопрос, на который пользователь еще не ответил
+        Optional<Question> nextQuestion = questionsForSkill.stream()
+                .filter(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId()))
+                .findFirst();
+
+        // Если найден вопрос, строим и возвращаем его представление, иначе возвращаем ответ о завершении теста
+        return nextQuestion.map(q -> buildQuestionResponse(q, skill))
+                .orElseGet(this::getTestCompletionResponse);
+    }
+
+    private Optional<Skill> findNextSkillInCategory(Customer customer, Category category) {
+        // Получаем все навыки в текущей категории
+        List<Skill> skillsInCategory = skillRepository.findByCategoryId(category.getId());
+        // Находим первый навык в категории, для которого остались вопросы
+        return skillsInCategory.stream()
+                .filter(skill -> areQuestionsRemainingInSkill(customer, skill))
+                .findFirst();
+    }
+
+    private Optional<Category> findNextCategory(Customer customer, Category currentCategory) {
+        // Получаем все категории
+        List<Category> allCategories = categoryRepository.findAll();
+        // Находим первую категорию, которая не является текущей и для которой остались навыки с вопросами
+        return allCategories.stream()
+                .filter(category -> !category.equals(currentCategory) && areSkillsRemainingInCategory(customer, category))
+                .findFirst();
+    }
+
+    private boolean areSkillsRemainingInCategory(Customer customer, Category category) {
+        // Получаем все навыки в категории
+        List<Skill> skillsInCategory = skillRepository.findByCategoryId(category.getId());
+        // Проверяем, есть ли среди навыков те, для которых остались вопросы
+        return skillsInCategory.stream()
+                .anyMatch(skill -> areQuestionsRemainingInSkill(customer, skill));
     }
 
     private QuestionResponse findNextQuestionInCategory(Customer customer, Category category) {
-        // Получаем все навыки категории
+        // Получаем все навыки в текущей категории
         List<Skill> skillsInCategory = skillRepository.findByCategoryId(category.getId());
+        // Находим первый навык, для которого остались вопросы
+        Optional<Skill> nextSkill = skillsInCategory.stream()
+                .filter(skill -> areQuestionsRemainingInSkill(customer, skill))
+                .findFirst();
 
-        // Получаем все вопросы по всем навыкам в категории
-        List<Question> questionsInCategory = skillsInCategory.stream()
-                .flatMap(skill -> questionRepository.findBySkillId(skill.getId()).stream())
-                .distinct()
-                .toList();
+        // Если найден следующий навык, находим и возвращаем следующий вопрос для этого навыка
+        return nextSkill.map(skill -> findNextQuestionInSkill(customer, skill))
+                .orElseGet(this::getTestCompletionResponse);
+    }
 
-        // Найти первый вопрос из списка, который еще не был задан пользователю
-        Optional<Question> nextQuestion = questionsInCategory.stream()
-                .filter(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId())) // Исключаем уже отвеченные вопросы
-                .findFirst(); // Найти первый оставшийся вопрос
-
-        if (nextQuestion.isPresent()) {
-            Question q = nextQuestion.get();
-            Skill nextSkill = getSkill(q); // Получаем навык для следующего вопроса
-
-            // Возвращаем вопрос в формате QuestionResponse
-            return buildQuestionResponse(q, nextSkill);
-        } else {
-            // Если вопросов больше нет, возвращаем сообщение о завершении теста
-            return getTestCompletionResponse();
-        }
+    private QuestionResponse buildQuestionResponse(Question question, Skill skill) {
+        // Строим и возвращаем представление вопроса с дополнительной информацией о навыке
+        return QuestionResponse.builder()
+                .header("Skill: " + skill.getName()) // Заголовок с названием навыка
+                .id(question.getId())
+                .text(question.getText()) // Текст вопроса
+                .answers(question.getAnswers().stream()
+                        .map(answer -> AnswerResponse.builder()
+                                .id(answer.getId())
+                                .text(answer.getText()) // Текст ответа
+                                .score(answer.getScore()) // Оценка ответа
+                                .priority(answer.getPriority()) // Приоритет ответа
+                                .orderValue(answer.getOrderValue()) // Значение порядка ответа
+                                .build())
+                        .collect(Collectors.toList())) // Список ответов
+                .build();
     }
 
     private QuestionResponse getTestCompletionResponse() {
+        // Возвращаем сообщение о завершении теста
         return QuestionResponse.builder()
                 .message("Test Completed for Category!")
                 .build();
     }
 
-    private boolean areQuestionsRemainingInCategory(Customer customer, Category category) {
-        // Получить все навыки категории
-        List<Skill> skillsInCategory = skillRepository.findByCategoryId(category.getId());
-
-        // Проверить наличие вопросов по всем навыкам
-        for (Skill skill : skillsInCategory) {
-            List<Question> questionsForSkill = questionRepository.findBySkillId(skill.getId());
-            // Проверяем, есть ли вопросы, которые еще не были заданы
-            if (questionsForSkill.stream().anyMatch(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId()))) {
-                return true; // Есть оставшиеся вопросы
-            }
-        }
-        return false; // Вопросов больше нет
-    }
 
 
 
@@ -132,23 +197,6 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     private Category getCategory(Skill skill) {
         return Optional.ofNullable(skill.getCategory())
                 .orElseThrow(() -> new NotFoundException("No category found for the skill"));
-    }
-
-    private QuestionResponse buildQuestionResponse(Question question, Skill skill) {
-        return QuestionResponse.builder()
-                .header("Skill: " + skill.getName()) // Заголовок с названием навыка
-                .id(question.getId())
-                .text(question.getText())
-                .answers(question.getAnswers().stream()
-                        .map(answer -> AnswerResponse.builder()
-                                .id(answer.getId())
-                                .text(answer.getText())
-                                .score(answer.getScore())
-                                .priority(answer.getPriority())
-                                .orderValue(answer.getOrderValue())
-                                .build())
-                        .collect(Collectors.toList()))
-                .build();
     }
 
     @Override
@@ -219,33 +267,6 @@ public class UserAnswerServiceImpl implements UserAnswerService {
         if (exists) {
             throw new AlreadyExistException("Customer has already answered this question");
         }
-    }
-
-//    private QuestionResponse findNextQuestion(Question currentQuestion, Skill skill) {
-//        return questionService.findNextQuestion(currentQuestion.getId(), skill.getId(), currentQuestion.getJob().getId());
-//    }
-
-    private QuestionResponse buildQuestionResponse(QuestionResponse nextQuestion) {
-        if (nextQuestion == null) {
-            return QuestionResponse.builder()
-                    .message("Test Completed!")
-                    .build();
-        }
-
-        return QuestionResponse.builder()
-                .id(nextQuestion.getId())
-                .text(nextQuestion.getText())
-                .answers(nextQuestion.getAnswers().stream()
-                        .map(ans -> AnswerResponse.builder()
-                                .id(ans.getId())
-                                .text(ans.getText())
-                                .score(ans.getScore())
-                                .priority(ans.getPriority())
-                                .orderValue(ans.getOrderValue())
-                                .build())
-                        .collect(Collectors.toList()))
-                .message(null)
-                .build();
     }
 
     private void validateAndSaveUserAnswer(Customer customer, Question question, Answer answer, Skill skill) {

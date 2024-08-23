@@ -64,6 +64,22 @@ public class QuestionServiceImpl implements QuestionService {
         return QuestionResponseMapper.toQuestionResponse(question);
     }
 
+
+    @Transactional
+    @Override
+    public QuestionResponse updateQuestion(Long jobId, Long questionId, QuestionRequest questionRequest) {
+        Job job = jobFinderService.findJobById(jobId);
+        Question question = questionRepository.findById(questionId)
+                .orElseThrow(() -> new NotFoundException("Question not found"));
+        question.setText(questionRequest.getText());
+        processSkills(question, questionRequest.getSkillNames(), job, questionRequest.getCategoryName());
+        createAndSetAnswers(question, questionRequest.getAnswers());
+        questionRepository.save(question);
+        return QuestionResponseMapper.toQuestionResponse(question);
+    }
+
+
+
     private void checkQuestionExists(String questionText) {
         if (questionRepository.existsByText(questionText)) {
             throw new AlreadyExistException("Question with this text already exists");
@@ -241,6 +257,11 @@ public class QuestionServiceImpl implements QuestionService {
                     return new QuestionIdsDto(question.getId(), question.getText(), answers);
                 })
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public long getTotalQuestionsCount() {
+        return questionRepository.count();
     }
     }
 

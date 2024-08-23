@@ -9,6 +9,7 @@ import com.example.careercraft.repository.UserRepository;
 import com.example.careercraft.service.PasswordResetService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
@@ -22,6 +23,7 @@ import java.util.UUID;
 
 @Service
 @AllArgsConstructor
+@Slf4j
 public class PasswordResetServiceImpl implements PasswordResetService {
 
     private UserRepository userRepository;
@@ -30,40 +32,54 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
     private JavaMailSender mailSender;
 
-    @Transactional
-    public void validateResetToken(String token) {
-        Optional<PasswordResetToken> optionalToken = passwordResetTokenRepository.findByToken(token);
-        if (optionalToken.isEmpty() || optionalToken.get().isExpired() || optionalToken.get().isInvalidated()) {
-            throw new AppException(HttpStatus.BAD_REQUEST, "Invalid or expired token");
+    private void validateResetToken(String token) {
+        PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
+                .orElseThrow(() -> new NotFoundException("Invalid or expired token"));
+
+        // Если токен истёк, инвалидируйте его
+        if (passwordResetToken.isExpired()) {
+            passwordResetToken.setInvalidated(true);
+            log.info("Saving token: {}", passwordResetToken);
+            passwordResetTokenRepository.save(passwordResetToken);
+            log.info("Token saved successfully: id={}, token={}, expired={}",
+                    passwordResetToken.getId(),
+                    passwordResetToken.getToken(),
+                    passwordResetToken.isExpired());
+            throw new AppException(HttpStatus.BAD_REQUEST, "Token has expired");
+        }
+
+        if (passwordResetToken.isInvalidated()) {
+            throw new AppException(HttpStatus.BAD_REQUEST, "Token has already been used");
         }
     }
-
     @Transactional
     @Override
     public void resetPassword(String token, String newPassword, String confirmPassword) {
-        // Найдите токен в базе данных
+        validateResetToken(token);
+        // Проверяем токен и его состояние
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
                 .orElseThrow(() -> new NotFoundException("Invalid or expired token"));
-        validateResetToken(token);
-        // Найдите пользователя, связанного с токеном
+
+
+
         User user = passwordResetToken.getUser();
 
-        // Проверка совпадения нового пароля и подтверждения пароля
         if (!newPassword.equals(confirmPassword)) {
-            throw new AppException(HttpStatus.CONFLICT,"Passwords do not match");
+            throw new AppException(HttpStatus.CONFLICT, "Passwords do not match");
         }
 
-        // Проверка, совпадает ли новый пароль со старым
         if (passwordEncoder.matches(newPassword, user.getPassword())) {
-            throw new AppException(HttpStatus.BAD_REQUEST,"New password cannot be the same as the old password");
+            throw new AppException(HttpStatus.BAD_REQUEST, "New password cannot be the same as the old password");
         }
 
-        // Обновите пароль пользователя
         user.setPassword(passwordEncoder.encode(newPassword));
         userRepository.save(user);
 
-        // Удалите или деактивируйте токен после использования
-        passwordResetTokenRepository.delete(passwordResetToken);
+        // Инвалидируем токен
+        passwordResetToken.setInvalidated(true);
+        passwordResetTokenRepository.save(passwordResetToken);
+
+        log.info("Password reset successfully for user: {}", user.getEmail());
     }
 
     @Transactional
@@ -78,15 +94,15 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         // Генерация 4-значного числового токена
         String token = generateFourDigitToken();
 
-        // Установите срок действия токена (например, 10 минут)
+        // Установите срок действия токена (например, 1 минуту)
         LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(1);
 
-        // Сохраните токен в базе данных
+        // Создайте новый токен и добавьте его к пользователю
         PasswordResetToken resetToken = new PasswordResetToken();
         resetToken.setToken(token);
         resetToken.setUser(user);
         resetToken.setExpiryDate(expiryDate);
-        resetToken.setInvalidated(false); // Токен еще не использован
+        resetToken.setInvalidated(false);
         passwordResetTokenRepository.save(resetToken);
 
         // Отправьте email с инструкциями по сбросу пароля
@@ -116,4 +132,6 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         mailMessage.setFrom("sys-admin@domain.com");
         mailSender.send(mailMessage);
     }
+
+
 }

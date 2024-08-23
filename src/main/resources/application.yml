@@ -12,8 +12,8 @@ spring:
       max-request-size: 10MB
 
 jwtSecret: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9123saddsaA2sdGgfsa
-jwtExpirationInMs: 36000
-refreshTokenExpiration: 6000000
+jwtExpirationInMs: 36000000
+refreshTokenExpiration: 60000000
 
 jwt:
   secret: ${jwtSecret}

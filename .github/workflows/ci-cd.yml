@@ -1,0 +1,67 @@
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "master" ]
+  pull_request:
+    branches: [ "master" ]
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+        with:
+          gradle-version: '8.10' # Убедитесь, что версия Gradle соответствует вашей
+
+      - name: Build career-craft with Gradle
+        run: gradle build
+        shell: sh
+        working-directory: ./career_craft
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: careercraft-jar
+          path: career_craft/build/libs/*.jar
+
+      - name: Deploy to EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          EC2_USER: 'ubuntu'
+          EC2_HOST: '44.203.152.52'
+        run: |
+          # Убедитесь, что ключ доступен
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Загрузите JAR-файл из артефактов
+          mkdir -p build/libs
+          curl -L -o build/libs/careercraft-0.0.1-SNAPSHOT.jar ${{ steps.archive.outputs.artifact-path }}
+
+          # Удалите старый JAR-файл на EC2
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
+          sudo rm -f /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
+          EOF
+
+          # Копируйте новый JAR-файл на EC2
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no build/libs/careercraft-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/
+
+          # Переместите JAR-файл и перезапустите службу
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
+          sudo mv /home/ubuntu/careercraft-0.0.1-SNAPSHOT.jar /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
+          sudo systemctl restart careercraft.service
+          EOF

@@ -3,6 +3,7 @@ package com.example.careercraft.service;
 import com.example.careercraft.dto.SkillDTO;
 import com.example.careercraft.entity.Category;
 import com.example.careercraft.entity.Skill;
+import com.example.careercraft.response.QuestionResponse;
 
 import java.util.Collection;
 import java.util.List;
@@ -18,6 +19,8 @@ public interface SkillService {
   void addSkillToJob(Long jobId, String skillName);
 
     List<SkillDTO> getAllSkills();
+
+    public List<QuestionResponse> getAllQuestionsForSkill(Long skillId);
 
     public List<Long> getAllSkillIds();
 
