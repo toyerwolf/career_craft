@@ -38,7 +38,7 @@ jobs:
         run: find . -type d
 
       - name: Build career-craft with Gradle
-        run: gradle build
+        run: gradle build --info
         working-directory: ./ # Убедитесь, что это правильный путь
 
       - name: Archive build artifacts
