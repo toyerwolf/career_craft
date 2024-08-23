@@ -25,20 +25,21 @@ jobs:
         with:
           gradle-version: '8.10'
 
+      - name: List files in root directory
+        run: ls -la
+
+      - name: List files in career_craft directory
+        run: ls -la career_craft
+
       - name: Build career-craft with Gradle
         run: gradle build
-        working-directory: ./careercraft
+        working-directory: ./career_craft  # Убедитесь, что это правильный путь
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: careercraft-jar
           path: career_craft/build/libs/*.jar
-
-      - name: Download build artifacts
-        uses: actions/download-artifact@v2
-        with:
-          name: careercraft-jar
 
       - name: Deploy to EC2
         env:
