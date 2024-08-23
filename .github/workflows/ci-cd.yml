@@ -2,13 +2,13 @@ name: CI/CD Pipeline
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "master" ]
   pull_request:
-    branches: [ "main" ]
+    branches: [ "master" ]
 
 jobs:
   build:
-    name: Build and Deploy
+    name: Build
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -24,12 +24,11 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.10' # Убедитесь, что версия Gradle соответствует вашей
+          gradle-version: '8.10' # Убедитесь, что версия соответствует вашей
 
       - name: Build career-craft with Gradle
         run: gradle build
-        shell: sh
-        working-directory: ./career_craft
+        working-directory: ./careercraft # Исправьте путь к рабочему каталогу
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
