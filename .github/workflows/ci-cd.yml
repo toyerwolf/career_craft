@@ -33,7 +33,7 @@ jobs:
 
       - name: Build career-craft with Gradle
         run: gradle build
-        working-directory: ./career_craft  # Убедитесь, что это правильный путь
+        working-directory: ./careercraft  # Убедитесь, что это правильный путь
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
