@@ -45,7 +45,7 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           name: careercraft-jar
-          path: career_craft/build/libs/*.jar
+          path: build/libs/*.jar
 
       - name: Deploy to EC2
         env:
