@@ -57,19 +57,15 @@ jobs:
           mkdir -p ~/.ssh
           echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
           chmod 600 ~/.ssh/id_rsa
-
-          # Загрузите JAR-файл из артефактов
-          mkdir -p build/libs
-          curl -L -o build/libs/careercraft-0.0.1-SNAPSHOT.jar ${{ steps.archive.outputs.artifact-path }}
-
+          
           # Удалите старый JAR-файл на EC2
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
           sudo rm -f /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
           EOF
-
+          
           # Копируйте новый JAR-файл на EC2
           scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no build/libs/careercraft-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/
-
+          
           # Переместите JAR-файл и перезапустите службу
           ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
           sudo mv /home/ubuntu/careercraft-0.0.1-SNAPSHOT.jar /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
