@@ -27,7 +27,7 @@ jobs:
 
       - name: Build career-craft with Gradle
         run: gradle build
-        working-directory: career_craft
+        working-directory: ./careercraft
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
