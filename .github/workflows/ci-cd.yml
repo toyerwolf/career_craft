@@ -26,7 +26,7 @@ jobs:
           gradle-version: '8.10'
 
       - name: List files in root directory
-        run: ls -la
+        run: ls
 
       - name: List files in career_craft directory
         run: ls -la careercraft
