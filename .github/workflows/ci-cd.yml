@@ -8,12 +8,11 @@ on:
 
 jobs:
   build:
-    name: Build
+    name: Build and Deploy
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
       - name: Set up JDK 17
         uses: actions/setup-java@v4
@@ -24,17 +23,22 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v3
         with:
-          gradle-version: '8.10' # Убедитесь, что версия соответствует вашей
+          gradle-version: '8.10'
 
       - name: Build career-craft with Gradle
         run: gradle build
-        working-directory: ./* # Исправьте путь к рабочему каталогу
+        working-directory: ./career_craft
 
       - name: Archive build artifacts
         uses: actions/upload-artifact@v2
         with:
           name: careercraft-jar
           path: career_craft/build/libs/*.jar
+
+      - name: Download build artifacts
+        uses: actions/download-artifact@v2
+        with:
+          name: careercraft-jar
 
       - name: Deploy to EC2
         env:
