@@ -30,6 +30,9 @@ public class Customer {
     @JoinColumn(name = "user_id")
     private User user;
 
+
+    private Integer answeredQuestionsCount = 0;
+
     @Override
     public boolean equals(Object o) {
         if (this == o) return true;

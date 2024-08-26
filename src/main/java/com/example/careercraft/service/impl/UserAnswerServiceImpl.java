@@ -50,6 +50,7 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     private final AuthService authService;
     private final SkillRepository skillRepository;
     private final CategoryRepository categoryRepository;
+    private final CustomerRepository customerRepository;
 
 
     @Transactional
@@ -106,23 +107,21 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     }
 
     private boolean areQuestionsRemainingInSkill(Customer customer, Skill skill) {
-        // Получаем все вопросы, относящиеся к текущему навыку
+        // Получаем все вопросы для текущего навыка
         List<Question> questionsForSkill = questionRepository.findBySkillId(skill.getId());
+
         // Проверяем, есть ли среди вопросов те, на которые пользователь еще не ответил
         return questionsForSkill.stream()
                 .anyMatch(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId()));
     }
 
     private QuestionResponse findNextQuestionInSkill(Customer customer, Skill skill) {
-        // Получаем все вопросы для текущего навыка
         List<Question> questionsForSkill = questionRepository.findBySkillId(skill.getId());
-        // Находим первый вопрос, на который пользователь еще не ответил
         Optional<Question> nextQuestion = questionsForSkill.stream()
                 .filter(q -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customer.getId(), q.getId()))
                 .findFirst();
 
-        // Если найден вопрос, строим и возвращаем его представление, иначе возвращаем ответ о завершении теста
-        return nextQuestion.map(q -> buildQuestionResponse(q, skill))
+        return nextQuestion.map(q -> buildQuestionResponse(q, skill, customer))
                 .orElseGet(this::getTestCompletionResponse);
     }
 
@@ -165,8 +164,7 @@ public class UserAnswerServiceImpl implements UserAnswerService {
                 .orElseGet(this::getTestCompletionResponse);
     }
 
-    private QuestionResponse buildQuestionResponse(Question question, Skill skill) {
-        // Строим и возвращаем представление вопроса с дополнительной информацией о навыке
+    private QuestionResponse buildQuestionResponse(Question question, Skill skill, Customer customer) {
         return QuestionResponse.builder()
                 .header("Skill: " + skill.getName()) // Заголовок с названием навыка
                 .id(question.getId())
@@ -180,6 +178,7 @@ public class UserAnswerServiceImpl implements UserAnswerService {
                                 .orderValue(answer.getOrderValue()) // Значение порядка ответа
                                 .build())
                         .collect(Collectors.toList())) // Список ответов
+                .answeredQuestionsCount(customer.getAnsweredQuestionsCount()) // Установка количества отвеченных вопросов
                 .build();
     }
 
@@ -249,7 +248,16 @@ public class UserAnswerServiceImpl implements UserAnswerService {
 
     private void handleUserAnswer(Customer customer, Question question, Answer answer, Skill skill) {
         checkIfAnswerExists(customer, question);
+        incrementAnsweredQuestionsCount(customer);
         saveUserAnswer(customer, question, answer, skill);
+    }
+
+    private void incrementAnsweredQuestionsCount(Customer customer) {
+        // Увеличиваем счетчик отвеченных вопросов
+        customer.setAnsweredQuestionsCount(customer.getAnsweredQuestionsCount() + 1);
+
+        // Сохраняем изменения в базе данных
+        customerRepository.save(customer);
     }
 
     private void saveUserAnswer(Customer customer, Question question, Answer answer, Skill skill) {

@@ -1,3 +1,8 @@
+/**
+ * Sample Header
+ *
+ * @author Huseyn
+ */
 package com.example.careercraft;
 
 import org.springframework.boot.SpringApplication;

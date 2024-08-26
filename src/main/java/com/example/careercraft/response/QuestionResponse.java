@@ -22,6 +22,7 @@ public class QuestionResponse {
     private Long jobId; // Идентификатор работы, к которой относится вопрос
     private List<AnswerResponse> answers;
     private String message;
+    private Integer answeredQuestionsCount;
 //    private JobDto jobDto;
 
 
