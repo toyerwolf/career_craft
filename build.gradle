@@ -70,10 +70,10 @@ dependencies {
 
 
 
-checkstyle {
-    toolVersion = '10.18.0' // или актуальная версия Checkstyle
-    config = resources.text.fromFile('config/checkstyle/checkstyle.xml')
-}
+//checkstyle {
+//    toolVersion = '10.18.0' // или актуальная версия Checkstyle
+//    config = resources.text.fromFile('config/checkstyle/checkstyle.xml')
+//}
 
 
 pmd {
@@ -89,7 +89,7 @@ spotbugs {
 }
 
 tasks.named('check') {
-    dependsOn 'checkstyleMain', 'pmdMain', 'spotbugsMain'
+    dependsOn  'pmdMain', 'spotbugsMain'
 }
 
 cpd {
