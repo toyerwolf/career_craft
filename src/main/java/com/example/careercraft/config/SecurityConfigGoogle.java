@@ -2,7 +2,7 @@ package com.example.careercraft.config;
 
 import com.example.careercraft.security.JwtAuthenticationEntryPoint;
 import com.example.careercraft.security.JwtAuthenticationFilter;
-import com.example.careercraft.service.impl.CustomOAuth2UserService;
+
 import com.example.careercraft.service.impl.CustomerUserDetailsService;
 import lombok.AllArgsConstructor;
 import org.springframework.context.annotation.Bean;
@@ -22,8 +22,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 import org.springframework.web.cors.CorsConfiguration;
-import org.springframework.web.cors.CorsConfigurationSource;
-import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
 
 import java.util.List;
 
@@ -46,7 +45,7 @@ public class SecurityConfigGoogle {
         return new BCryptPasswordEncoder();
     }
 
-    @Bean(BeanIds.AUTHENTICATION_MANAGER)
+    @Bean
     public AuthenticationManager authenticationManager(
             AuthenticationConfiguration authenticationConfiguration) throws Exception {
         return authenticationConfiguration.getAuthenticationManager();
