@@ -73,12 +73,12 @@ cpd {
 }
 
 // SonarQube configuration
-sonarqube {
+sonar {
     properties {
         property "sonar.projectKey", "CareerCraft-for-git"
         property "sonar.projectName", "CareerCraft for git"
         property "sonar.host.url", "http://localhost:9000" // URL of the SonarQube server
-        property "sonar.login", "sqp_f063159e9e2c0d61b0d184a888b2dc57f1292ac4" // Token for authentication
+        property "sonar.token", "sqp_f063159e9e2c0d61b0d184a888b2dc57f1292ac4" // Token for authentication
     }
 }
 
