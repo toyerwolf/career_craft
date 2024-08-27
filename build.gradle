@@ -75,8 +75,11 @@ cpd {
 // SonarQube configuration
 sonar {
     properties {
-        property "sonar.projectKey", "CareerCraft-for-git"
-        property "sonar.projectName", "CareerCraft for git"
+        property "sonar.projectKey", "sonaqube"
+        property "sonar.projectName", "sonaqube"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.token", "sqp_5f26d5bd4d20d55c5e3b1536ea38b2c62a178483"
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
     }
 
 
