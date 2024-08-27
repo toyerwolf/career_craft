@@ -1,73 +1,73 @@
-#name: CI/CD Pipeline
-#
-#on:
-#  push:
-#    branches: [ "main" ]
-#  pull_request:
-#    branches: [ "main" ]
-#
-#jobs:
-#  build:
-#    name: Build and Deploy
-#    runs-on: ubuntu-latest
-#    steps:
-#      - name: Checkout code
-#        uses: actions/checkout@v4
-#
-#      - name: Set up JDK 17
-#        uses: actions/setup-java@v4
-#        with:
-#          java-version: '17'
-#          distribution: 'temurin'
-#
-#      - name: Setup Gradle
-#        uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
-#
-#
-#
-#      - name: List files in root directory
-#        run: ls
-#
-##      - name: List files in career_craft directory
-##        run: ls -la career_craft
-#
-#      - name: List files in src directory
-#        run: ls -la src
-#
-#      - name: Find all directories
-#        run: find . -type d
-#
-#      - name: Build career-craft with Gradle
-#        run: gradle build --info
-#        working-directory: ./ # Убедитесь, что это правильный путь
-#
-#      - name: Archive build artifacts
-#        uses: actions/upload-artifact@v2
-#        with:
-#          name: careercraft-jar
-#          path: build/libs/*.jar
-#
-#      - name: Deploy to EC2
-#        env:
-#          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
-#          EC2_USER: 'ubuntu'
-#          EC2_HOST: '44.203.152.52'
-#        run: |
-#          # Убедитесь, что ключ доступен
-#          mkdir -p ~/.ssh
-#          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
-#          chmod 600 ~/.ssh/id_rsa
-#
-#          # Удалите старый JAR-файл на EC2
-#          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
-#          sudo rm -f /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
-#          EOF
-#
-#          # Копируйте новый JAR-файл на EC2
-#          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no build/libs/careercraft-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/
-#
-#          # Переместите JAR-файл и перезапустите службу
-#          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
-#          sudo mv /home/ubuntu/careercraft-0.0.1-SNAPSHOT.jar /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
-#          sudo systemctl restart careercraft.service
-#          EOF
+name: CI/CD Pipeline
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+  build:
+    name: Build and Deploy
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@417ae3ccd767c252f5661f1ace9f835f9654f2b5 # v3.1.0
+
+
+
+      - name: List files in root directory
+        run: ls
+
+#      - name: List files in career_craft directory
+#        run: ls -la career_craft
+
+      - name: List files in src directory
+        run: ls -la src
+
+      - name: Find all directories
+        run: find . -type d
+
+      - name: Build career-craft with Gradle
+        run: gradle build --info
+        working-directory: ./ # Убедитесь, что это правильный путь
+
+      - name: Archive build artifacts
+        uses: actions/upload-artifact@v2
+        with:
+          name: careercraft-jar
+          path: build/libs/*.jar
+
+      - name: Deploy to EC2
+        env:
+          SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
+          EC2_USER: 'ubuntu'
+          EC2_HOST: '44.203.152.52'
+        run: |
+          # Убедитесь, что ключ доступен
+          mkdir -p ~/.ssh
+          echo "$SSH_PRIVATE_KEY" > ~/.ssh/id_rsa
+          chmod 600 ~/.ssh/id_rsa
+
+          # Удалите старый JAR-файл на EC2
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
+          sudo rm -f /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
+          EOF
+
+          # Копируйте новый JAR-файл на EC2
+          scp -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no build/libs/careercraft-0.0.1-SNAPSHOT.jar $EC2_USER@$EC2_HOST:/home/ubuntu/
+
+          # Переместите JAR-файл и перезапустите службу
+          ssh -i ~/.ssh/id_rsa -o StrictHostKeyChecking=no $EC2_USER@$EC2_HOST <<EOF
+          sudo mv /home/ubuntu/careercraft-0.0.1-SNAPSHOT.jar /home/ubuntu/careercraft-0.0.1-SNAPSHOT-new.jar
+          sudo systemctl restart careercraft.service
+          EOF
