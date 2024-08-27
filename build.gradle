@@ -77,8 +77,8 @@ sonarqube {
     properties {
         property "sonar.projectKey", "CareerCraft-for-git"
         property "sonar.projectName", "CareerCraft for git"
-        property "sonar.host.url", System.getenv('SONAR_HOST_URL') // Использование переменной окружения
-        property "sonar.login", System.getenv('SONAR_TOKEN') // Использование переменной окружения
+        property "sonar.host.url", System.getenv('SONAR_HOST_URL') // URL of the SonarQube server
+        property "sonar.login", System.getenv('SONAR_TOKEN') // Token for authentication
     }
 }
 
