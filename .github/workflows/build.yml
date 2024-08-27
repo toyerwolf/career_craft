@@ -32,8 +32,8 @@ jobs:
       - name: Find all directories
         run: find . -type d
 
-      - name: Build project with Gradle
-        run: ./gradle build --info
+      - name: Build career-craft with Gradle
+        run: gradle build --info
         working-directory: ./
 
       - name: Archive build artifacts
