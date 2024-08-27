@@ -93,4 +93,4 @@ jobs:
           restore-keys: ${{ runner.os }}-gradle
 
       - name: Run SonarQube analysis
-        run: ./gradlew sonarqube --debug
+        run: ./gradlew sonarqube --info
