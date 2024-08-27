@@ -18,7 +18,7 @@ public class GlobalExceptionHandler {
 
 
     @ExceptionHandler(value = AppException.class)
-    public ResponseEntity<?> handleAppException(AppException e){
+    public ResponseEntity<ErrorResponse> handleAppException(AppException e){
         return ResponseEntity.status(e.getStatus()).body(new ErrorResponse(e.getStatus(), e.getMessage()));
     }
 
@@ -34,7 +34,7 @@ public class GlobalExceptionHandler {
 //    }
 
     @ExceptionHandler(value = ConstraintViolationException.class)
-    public ResponseEntity<?> handleMethodArgumentNotValidException(ConstraintViolationException e){
+    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValidException(ConstraintViolationException e){
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(new ErrorResponse(HttpStatus.FORBIDDEN,e.getMessage()));
     }
 

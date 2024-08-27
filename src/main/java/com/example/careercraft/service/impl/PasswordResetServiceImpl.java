@@ -9,11 +9,13 @@ import com.example.careercraft.repository.UserRepository;
 import com.example.careercraft.service.PasswordResetService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.security.crypto.password.PasswordEncoder;
+import org.springframework.stereotype.Repository;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -31,6 +33,8 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     private PasswordEncoder passwordEncoder;
 
     private JavaMailSender mailSender;
+
+    private final Random random = new Random();
 
     private void validateResetToken(String token) {
         PasswordResetToken passwordResetToken = passwordResetTokenRepository.findByToken(token)
@@ -95,7 +99,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
         String token = generateFourDigitToken();
 
         // Установите срок действия токена (например, 1 минуту)
-        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(1);
+        LocalDateTime expiryDate = LocalDateTime.now().plusMinutes(3);
 
         // Создайте новый токен и добавьте его к пользователю
         PasswordResetToken resetToken = new PasswordResetToken();
@@ -110,10 +114,10 @@ public class PasswordResetServiceImpl implements PasswordResetService {
     }
 
     private String generateFourDigitToken() {
-        Random random = new Random();
         int token = 1000 + random.nextInt(9000); // Генерация случайного 4-значного числа
         return String.valueOf(token);
     }
+
 
     private void sendPasswordResetEmail(String email, String token) {
         String resetUrl =  "http://44.203.152.52:8070/api/password/reset"; // URL без параметров

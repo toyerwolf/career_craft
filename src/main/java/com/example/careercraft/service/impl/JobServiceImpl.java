@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
 public class JobServiceImpl implements JobService {
 
     private final JobRepository jobRepository;
+    private final JobFinderService jobFinderService;
 
 
     @Override
@@ -29,8 +30,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public JobDto getJobById(Long id) {
-        Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Job not found with id: " + id));
+        Job job = jobFinderService.findJobById(id);
         return convertToDto(job);
     }
 
@@ -46,8 +46,7 @@ public class JobServiceImpl implements JobService {
 
     @Override
     public JobDto updateJob(Long id, JobDto jobDto) {
-        Job job = jobRepository.findById(id)
-                .orElseThrow(() -> new NotFoundException("Job not found with id: " + id));
+        Job job = jobFinderService.findJobById(id);
         job.setName(jobDto.getName());
         Job updatedJob = jobRepository.save(job);
         return convertToDto(updatedJob);
