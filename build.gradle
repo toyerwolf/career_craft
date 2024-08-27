@@ -77,8 +77,8 @@ sonarqube {
     properties {
         property "sonar.projectKey", "CareerCraft-for-git"
         property "sonar.projectName", "CareerCraft for git"
-        property "sonar.host.url", System.getenv('SONAR_HOST_URL') // URL of the SonarQube server
-        property "sonar.login", System.getenv('SONAR_TOKEN') // Token for authentication
+        property "sonar.host.url", "http://localhost:9000" // URL of the SonarQube server
+        property "sonar.login", "sqp_f063159e9e2c0d61b0d184a888b2dc57f1292ac4" // Token for authentication
     }
 }
 
@@ -88,11 +88,11 @@ jacoco {
 
 tasks.named('test') {
     useJUnitPlatform()
-    finalizedBy tasks.named('jacocoTestReport') // Генерация отчета после выполнения тестов
+    finalizedBy tasks.named('jacocoTestReport') // Ensure the Jacoco report is generated after tests
 }
 
 tasks.named('jacocoTestReport') {
-    dependsOn tasks.named('test') // Обеспечьте выполнение тестов до генерации отчета
+    dependsOn tasks.named('test') // Ensure tests are run before generating the report
     reports {
         xml.required = true
         html.required = true
