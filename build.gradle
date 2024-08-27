@@ -6,6 +6,7 @@ plugins {
     id 'pmd'
     id 'com.github.spotbugs' version '5.0.9'
     id "org.sonarqube" version "5.0.0.4638"
+    id "de.aaschmid.cpd" version "3.3"
 }
 
 group = 'com.example'
@@ -59,27 +60,28 @@ dependencies {
     testImplementation group: 'com.github.tomakehurst', name: 'wiremock-standalone', version: '3.0.1'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+    spotbugs 'com.github.spotbugs:spotbugs:4.7.3'
     implementation group: 'com.puppycrawl.tools', name: 'checkstyle', version: '10.18.0'
+    // https://mvnrepository.com/artifact/net.sourceforge.pmd/pmd
     implementation group: 'net.sourceforge.pmd', name: 'pmd', version: '7.4.0', ext: 'pom'
+
 }
 
-sonar {
-    properties {
-        property "sonar.projectKey", "careercraft"
-        property "sonar.projectName", "CareerCraft"
-    }
-}
+
+
 
 checkstyle {
-    toolVersion = '10.18.0'
+    toolVersion = '10.18.0' // или актуальная версия Checkstyle
     config = resources.text.fromFile('config/checkstyle/checkstyle.xml')
 }
 
+
 pmd {
     toolVersion = '7.4.0'
-    ruleSets = []
-    ruleSetFiles = files('config/pmd-ruleset.xml')
+    ruleSets = [] // Оставьте пустым, так как мы будем использовать пользовательский файл конфигурации
+    ruleSetFiles = files('config/pmd-ruleset.xml') // Укажите путь к вашему файлу конфигурации
 }
+
 
 spotbugs {
     toolVersion = '4.7.3'
@@ -90,6 +92,32 @@ tasks.named('check') {
     dependsOn 'checkstyleMain', 'pmdMain', 'spotbugsMain'
 }
 
+cpd {
+    minimumTokenCount = 50
+    ignoreFailures = true
+    language = 'java'
+}
+
+cpd {
+    minimumTokenCount = 50 // Минимальное количество токенов для обнаружения дубликатов
+    language = 'java' // Язык кода, который анализируется
+    ignoreAnnotations = true // Игнорировать аннотации
+    ignoreLiterals = true // Игнорировать строковые литералы
+    ignoreIdentifiers = true // Игнорировать идентификаторы переменных и методов
+}
+
+tasks.withType(Copy).configureEach {
+    if (name == 'cpdCheck') {
+        reports {
+            xml.required.set(true)
+            xml.outputLocation.set(file("/reports/cpd/cpd.xml"))
+            text.required.set(true)
+            text.outputLocation.set(file("/reports/cpd/cpd.txt"))
+        }
+    }
+}
+
 tasks.named('test') {
     useJUnitPlatform()
 }
+

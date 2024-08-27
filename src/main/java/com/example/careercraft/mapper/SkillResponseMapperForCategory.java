@@ -1,12 +1,12 @@
 package com.example.careercraft.mapper;
 
-import com.example.careercraft.dto.SkillQuestionResponse;
+
 import com.example.careercraft.entity.Question;
 import com.example.careercraft.entity.Skill;
 import com.example.careercraft.exception.NotFoundException;
 import com.example.careercraft.response.DetailedSkillQuestionResponse;
-import com.example.careercraft.response.QuestionResponse;
-import com.example.careercraft.service.impl.AnswerServiceImpl;
+
+import com.example.careercraft.util.AnswerResponseUtil;
 
 import java.util.Collections;
 import java.util.Optional;
@@ -15,11 +15,12 @@ import java.util.stream.Collectors;
 public class SkillResponseMapperForCategory {
 
 
+
     public static DetailedSkillQuestionResponse toDetailedSkillQuestionResponse(Optional<Question> optionalQuestion) {
         DetailedSkillQuestionResponse response = new DetailedSkillQuestionResponse();
 
         if (optionalQuestion.isEmpty()) {
-            throw new IllegalArgumentException("Question not found");
+            throw new NotFoundException("Question not found");
         }
 
         Question question = optionalQuestion.get();
@@ -61,15 +62,7 @@ public class SkillResponseMapperForCategory {
         questionResponse.setText(question.getText());
         questionResponse.setJobId(question.getJob().getId());
         questionResponse.setAnswers(question.getAnswers().stream()
-                .map(answer -> {
-                    DetailedSkillQuestionResponse.AnswerResponse answerResponse = new DetailedSkillQuestionResponse.AnswerResponse();
-                    answerResponse.setAnswerId(answer.getId());
-                    answerResponse.setText(answer.getText());
-                    answerResponse.setPriority(answer.getPriority());
-                    answerResponse.setScore(answer.getScore());
-                    answerResponse.setOrderValue(answer.getOrderValue());
-                    return answerResponse;
-                })
+                .map(AnswerResponseUtil::mapAnswerToResponse) // Используем утилитный метод
                 .collect(Collectors.toList()));
 
         // Устанавливаем данные в ответ
