@@ -51,7 +51,7 @@ jobs:
         env:
           SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
           EC2_USER: 'ubuntu'
-          EC2_HOST: '54.166.176.74'
+          EC2_HOST: '35.173.133.91'
         run: |
           # Убедитесь, что ключ доступен
           mkdir -p ~/.ssh
