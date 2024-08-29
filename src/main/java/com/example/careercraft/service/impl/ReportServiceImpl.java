@@ -3,6 +3,7 @@ package com.example.careercraft.service.impl;
 import com.example.careercraft.dto.*;
 import com.example.careercraft.entity.*;
 import com.example.careercraft.exception.AlreadyExistException;
+import com.example.careercraft.exception.IncompleteAnswersException;
 import com.example.careercraft.exception.NotFoundException;
 import com.example.careercraft.repository.*;
 import com.example.careercraft.service.AuthService;
@@ -52,6 +53,9 @@ public class ReportServiceImpl implements ReportService {
         List<UserAnswer> userAnswers = userAnswerRepository.findByCustomerId(customerId);
         Map<Long, List<UserAnswer>> answersBySkill = groupAnswersBySkill(userAnswers);
 
+
+        checkAllQuestionsAnswered(skillsInCategory, answersBySkill, categoryId);
+
         List<ReportDto> individualReports = skillsInCategory.stream()
                 .map(skill -> generateReportForSkill(customerId, skill.getId(), answersBySkill.get(skill.getId()), categoryId))
                 .filter(Optional::isPresent)
@@ -73,6 +77,18 @@ public class ReportServiceImpl implements ReportService {
                 .orElseThrow(() -> new NotFoundException("Valid aggregated report not found for customerId: " + customerInfo.getId() + " and categoryId: " + categoryId));
 
         return convertToAggregatedReportDto(aggregatedReport);
+    }
+
+
+    private void checkAllQuestionsAnswered(List<Skill> skillsInCategory, Map<Long, List<UserAnswer>> answersBySkill, Long categoryId) {
+        for (Skill skill : skillsInCategory) {
+            Long skillId = skill.getId();
+            List<UserAnswer> answers = answersBySkill.get(skillId);
+
+            if (answers == null || answers.size() < countTotalQuestionsForSkill(skill)) {
+                throw new IncompleteAnswersException("Not all questions answered for skillId: " + skillId + " in categoryId: " + categoryId);
+            }
+        }
     }
 
     @Override
@@ -147,12 +163,20 @@ public class ReportServiceImpl implements ReportService {
                     .orElseThrow(() -> new NotFoundException("Skill not found with id: " + skillId));
             log.info("Generating report for customerId: {}, skillId: {}, categoryId: {}", customerId, skillId, categoryId);
             invalidateExistingReportsForSkill(customerId, skillId, categoryId);
+
+            if (answersForSkill == null || answersForSkill.size() < countTotalQuestionsForSkill(skill)) {
+                throw new IncompleteAnswersException("Not all questions answered for skillId: " + skillId);
+            }
+
             Report report = createReport(customerId, answersForSkill, skill, categoryId);
             log.info("Report created: {}", report);
             reportRepository.save(report);
             return Optional.of(convertToReportDto(report, answersForSkill));
-        } catch (AlreadyExistException e) {
-            log.warn("Report already exists for skillId: {}, categoryId: {}, customerId: {}", skillId, categoryId, customerId);
+        } catch (IncompleteAnswersException e) {
+            log.warn("Incomplete answers for skillId: {}, categoryId: {}, customerId: {}: {}", skillId, categoryId, customerId, e.getMessage());
+            return Optional.empty();
+        } catch (IllegalArgumentException | AlreadyExistException e) {
+            log.warn("Error generating report for skillId: {}, categoryId: {}, customerId: {}: {}", skillId, categoryId, customerId, e.getMessage());
             return Optional.empty();
         } catch (Exception e) {
             log.error("Error generating report for skillId: {}, categoryId: {}, customerId: {}", skillId, categoryId, customerId, e);
