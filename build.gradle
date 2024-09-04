@@ -56,6 +56,9 @@ dependencies {
     testImplementation group: 'com.github.tomakehurst', name: 'wiremock-standalone', version: '3.0.1'
     implementation 'org.springframework.boot:spring-boot-starter-mail'
     implementation 'org.springframework.boot:spring-boot-starter-oauth2-client'
+
+    testImplementation 'org.mockito:mockito-junit-jupiter:5.6.0'
+    implementation 'com.paypal.sdk:rest-api-sdk:1.14.0'
 }
 
 tasks.named('test') {
@@ -75,26 +78,32 @@ cpd {
 // SonarQube configuration
 sonar {
     properties {
-        property "sonar.projectKey", "CareerCraft-for-git"
-        property "sonar.projectName", "CareerCraft for git"
-        property "sonar.host.url", "http://localhost:9000" // URL of the SonarQube server
-        property "sonar.token", "sqp_f063159e9e2c0d61b0d184a888b2dc57f1292ac4" // Token for authentication
+        property "sonar.projectKey", "sonaqube"
+        property "sonar.projectName", "sonaqube"
+        property "sonar.host.url", "http://localhost:9000"
+        property "sonar.token", "sqp_5f26d5bd4d20d55c5e3b1536ea38b2c62a178483"
+        property "sonar.coverage.jacoco.xmlReportPaths", "build/reports/jacoco/test/jacocoTestReport.xml"
     }
-}
 
-jacoco {
-    toolVersion = "0.8.8"
-}
 
-tasks.named('test') {
-    useJUnitPlatform()
-    finalizedBy tasks.named('jacocoTestReport') // Ensure the Jacoco report is generated after tests
-}
 
-tasks.named('jacocoTestReport') {
-    dependsOn tasks.named('test') // Ensure tests are run before generating the report
-    reports {
-        xml.required = true
-        html.required = true
+    jacoco {
+        toolVersion = "0.8.8"
     }
+
+    test {
+        useJUnitPlatform()
+        finalizedBy jacocoTestReport // Генерация отчета после выполнения тестов
+    }
+
+    jacocoTestReport {
+        dependsOn test // Обеспечьте выполнение тестов до генерации отчета
+        reports {
+            xml.required = true
+            html.required = true
+        }
+
+    }
+
+
 }

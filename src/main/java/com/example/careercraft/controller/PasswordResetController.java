@@ -17,7 +17,7 @@ public class PasswordResetController {
 
     private final PasswordResetService passwordResetService;
 
-    @Secured("USER")
+
     @PostMapping("/reset-request")
     public ResponseEntity<String> requestPasswordReset(
             @RequestParam("email") @NotBlank @Email String email) {
@@ -26,7 +26,7 @@ public class PasswordResetController {
     }
 
 
-    @Secured("USER")
+
     @PostMapping("/reset")
     public ResponseEntity<String> resetPassword(
             @Valid @RequestBody ResetPasswordRequest resetDto) {
