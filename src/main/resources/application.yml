@@ -3,7 +3,7 @@ server:
 
 spring:
   profiles:
-    include: db,google,mail
+    include: db,google,mail,ssl
   main:
     allow-bean-definition-overriding: true
   servlet:

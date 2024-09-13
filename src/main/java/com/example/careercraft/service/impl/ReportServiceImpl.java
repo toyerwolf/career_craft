@@ -52,10 +52,7 @@ public class ReportServiceImpl implements ReportService {
         List<Skill> skillsInCategory = skillRepository.findByCategoryId(categoryId);
         List<UserAnswer> userAnswers = userAnswerRepository.findByCustomerId(customerId);
         Map<Long, List<UserAnswer>> answersBySkill = groupAnswersBySkill(userAnswers);
-
-
         checkAllQuestionsAnswered(skillsInCategory, answersBySkill, categoryId);
-
         List<ReportDto> individualReports = skillsInCategory.stream()
                 .map(skill -> generateReportForSkill(customerId, skill.getId(), answersBySkill.get(skill.getId()), categoryId))
                 .filter(Optional::isPresent)
