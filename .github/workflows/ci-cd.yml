@@ -42,7 +42,7 @@ jobs:
         working-directory: ./ # Убедитесь, что это правильный путь
 
       - name: Archive build artifacts
-        uses: actions/upload-artifact@v2
+        uses: actions/upload-artifact@v3
         with:
           name: careercraft-jar
           path: build/libs/*.jar
