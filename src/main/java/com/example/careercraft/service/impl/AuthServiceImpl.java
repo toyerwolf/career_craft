@@ -8,10 +8,13 @@ import com.example.careercraft.entity.User;
 import com.example.careercraft.exception.AppException;
 import com.example.careercraft.exception.CustomAuthenticationException;
 import com.example.careercraft.exception.NotFoundException;
+import com.example.careercraft.repository.CustomerRepository;
 import com.example.careercraft.repository.UserRepository;
+import com.example.careercraft.req.CustomerUpdateRequest;
 import com.example.careercraft.security.JwtTokenProvider;
 import com.example.careercraft.security.UserPrincipal;
 import com.example.careercraft.service.AuthService;
+import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.authentication.AuthenticationManager;
@@ -28,6 +31,7 @@ public class AuthServiceImpl implements AuthService {
     private final JwtTokenProvider jwtTokenProvider;
     private final AuthenticationManager authenticationManager;
     private final UserRepository userRepository;
+    private final CustomerRepository customerRepository;
 
 
 
@@ -99,29 +103,78 @@ public class AuthServiceImpl implements AuthService {
     }
 
 
-    @Override
     public CustomerInfo getCustomerDetailsFromToken(String authHeader) {
+        validateAuthHeader(authHeader);
+        Long userIdFromJWT = getUserIdFromToken(authHeader);
+        User user = getUserById(userIdFromJWT);
+        Customer customer = getCustomerFromUser(user);
+        return buildCustomerInfo(customer, user.getEmail());
+    }
+
+    @Transactional
+    public CustomerInfo updateCustomerDetails(String authHeader, CustomerUpdateRequest updateRequest) {
+        validateAuthHeader(authHeader);
+        Long userIdFromJWT = getUserIdFromToken(authHeader);
+        User user = getUserById(userIdFromJWT);
+        Customer customer = getCustomerFromUser(user);
+        updateCustomerInfo(customer, updateRequest);
+        updateUserEmail(user, updateRequest);
+        customerRepository.save(customer);
+        userRepository.save(user);
+        return buildCustomerInfo(customer, user.getEmail());
+    }
+
+    private void validateAuthHeader(String authHeader) {
         if (authHeader == null || !authHeader.startsWith("Bearer ")) {
             throw new AppException(HttpStatus.UNAUTHORIZED, "Authorization header is missing or incorrect.");
         }
+    }
 
+    private Long getUserIdFromToken(String authHeader) {
         String token = authHeader.substring("Bearer ".length());
 
         if (!jwtTokenProvider.validateToken(token)) {
             throw new AppException(HttpStatus.UNAUTHORIZED, "Invalid or expired token.");
         }
 
-        Long userIdFromJWT = jwtTokenProvider.getUserIdFromJWT(token);
-
-        User user = userRepository.findById(userIdFromJWT)
-                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User with ID " + userIdFromJWT + " not found."));
-
-        if (user.getCustomer() == null) {
-            throw new AppException(HttpStatus.NOT_FOUND, "Customer not associated with user ID " + userIdFromJWT + ".");
-        }
-
-        Customer customer = user.getCustomer();
-        return new CustomerInfo(customer.getId(), customer.getName(), customer.getSurname());
+        return jwtTokenProvider.getUserIdFromJWT(token);
     }
 
+    private User getUserById(Long userId) {
+        return userRepository.findById(userId)
+                .orElseThrow(() -> new AppException(HttpStatus.NOT_FOUND, "User with ID " + userId + " not found."));
+    }
+
+    private Customer getCustomerFromUser(User user) {
+        if (user.getCustomer() == null) {
+            throw new AppException(HttpStatus.NOT_FOUND, "Customer not associated with user ID " + user.getId() + ".");
+        }
+        return user.getCustomer();
+    }
+
+    private void updateCustomerInfo(Customer customer, CustomerUpdateRequest updateRequest) {
+        customer.setName(updateRequest.getName());
+        customer.setSurname(updateRequest.getSurname());
+        customer.setAddress(updateRequest.getAddress());
+//        customer.setRegisteredAt(updateRequest.getRegisteredAt());
+    }
+
+    private void updateUserEmail(User user, CustomerUpdateRequest updateRequest) {
+        if (updateRequest.getEmail() != null && !updateRequest.getEmail().equals(user.getEmail())) {
+            user.setEmail(updateRequest.getEmail());
+        }
+    }
+
+    private CustomerInfo buildCustomerInfo(Customer customer, String email) {
+        return new CustomerInfo(
+                customer.getId(),
+                customer.getName(),
+                customer.getSurname(),
+                customer.getAddress(),
+                customer.getRegisteredAt(),
+                email
+        );
+    }
 }
+
+
