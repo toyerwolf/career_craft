@@ -16,12 +16,14 @@ public class AuthController {
     private final AuthService authService;
 
     @PostMapping("/login")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<JwtResponse> login(@RequestBody LoginDto loginDto) {
         JwtResponse jwtResponse = authService.login(loginDto);
         return ResponseEntity.ok(jwtResponse);
     }
 
     @PostMapping("/refresh-token")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<JwtResponse> refreshAccessToken(
             @RequestHeader("Authorization") String authorizationHeader,
             @RequestHeader("Refresh-Token") String refreshToken) {

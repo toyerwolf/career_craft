@@ -5,10 +5,7 @@ import com.example.careercraft.service.CategoryService;
 import lombok.AllArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -23,6 +20,7 @@ public class CategoryController {
 
     @Secured("USER")
     @GetMapping("/{categoryId}/questions")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<List<QuestionResponse>> getAllQuestionsForCategory(
             @PathVariable("categoryId") Long categoryId) {
         List<QuestionResponse> questions = categoryService.getAllQuestionsForCategory(categoryId);

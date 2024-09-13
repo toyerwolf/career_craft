@@ -24,6 +24,7 @@ public class UserAnswerController {
 
     @Secured("USER")
     @PostMapping("/answer")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<QuestionResponse> saveUserAnswer(
             @RequestHeader(value = "Authorization") String authHeader,
             @RequestBody UserAnswerRequest userAnswerRequest) {

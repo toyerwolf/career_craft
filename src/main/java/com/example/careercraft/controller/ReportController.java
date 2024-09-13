@@ -31,6 +31,7 @@ public class ReportController {
 
     @GetMapping("")
     @Secured("USER")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<List<AggregatedReportDto>> generateReports(
             @RequestHeader(value = "Authorization") String authHeader,
             @RequestParam Long categoryId) {
@@ -47,6 +48,7 @@ public class ReportController {
 
     @GetMapping("/aggregated")
     @Secured("USER")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<AggregatedReportDto> getAggregatedReportForCategory(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam Long categoryId) {
@@ -56,6 +58,7 @@ public class ReportController {
 
     @GetMapping("/category/{categoryId}")
     @Secured("USER")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<List<ReportDto>> getAllReportsForCategoryAndCustomer(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long categoryId) {
@@ -95,6 +98,7 @@ public class ReportController {
 //    }
 
     @GetMapping("/download")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public void downloadReportsAsPdf(
             @RequestHeader("Authorization") String authHeader,
             @RequestParam Long categoryId,

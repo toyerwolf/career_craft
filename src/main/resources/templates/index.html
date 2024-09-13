@@ -95,7 +95,7 @@
 
         if (token) {
             try {
-                const response = await fetch('/customerInfo', {
+                const response = await fetch('api/customers/info', {
                     headers: {
                         'Authorization': `Bearer ${token}`
                     }

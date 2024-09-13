@@ -19,6 +19,7 @@ public class PasswordResetController {
 
 
     @PostMapping("/reset-request")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<String> requestPasswordReset(
             @RequestParam("email") @NotBlank @Email String email) {
         passwordResetService.requestPasswordReset(email);
@@ -28,6 +29,7 @@ public class PasswordResetController {
 
 
     @PostMapping("/reset")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<String> resetPassword(
             @Valid @RequestBody ResetPasswordRequest resetDto) {
         passwordResetService.resetPassword(

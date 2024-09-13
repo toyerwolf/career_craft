@@ -45,6 +45,7 @@ public class QuestionController {
 
     @Secured("USER")
     @GetMapping("/{questionId}")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<QuestionResponse> getQuestionById(@PathVariable Long questionId){
         QuestionResponse questionResponse=questionService.getQuestionById(questionId);
         return ResponseEntity.ok(questionResponse);
@@ -52,6 +53,7 @@ public class QuestionController {
 
 
     @PutMapping("/jobs/{jobId}/{questionId}")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<QuestionResponse> updateQuestion(
             @PathVariable("jobId") Long jobId,
             @PathVariable("questionId") Long questionId,
@@ -74,6 +76,7 @@ public class QuestionController {
 
     @Secured("USER")
     @GetMapping("/nextQuestionInSkill")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<QuestionResponse> getNextQuestion(
             @RequestParam("currentQuestionId") Long currentQuestionId,
             @RequestParam("skillId") Long skillId,
@@ -121,6 +124,7 @@ public class QuestionController {
 
     @Secured("USER")
     @GetMapping("/firstQuestionsFromCategory")
+    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<DetailedSkillQuestionResponse> getFirstQuestionsFromCategory(
             @RequestParam("skillIds") Collection<Long> skillIds,
             @RequestParam("jobId") Long jobId,
