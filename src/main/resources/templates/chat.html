@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>Chat</title>
+    <script>
+        let socket;
+
+        function connect() {
+            socket = new WebSocket("wss://localhost:8443/chat"); // Убедитесь, что это правильный URL
+
+            socket.onopen = function() {
+                console.log("Connected to WebSocket");
+            };
+
+            socket.onmessage = function(event) {
+                const message = event.data;
+                document.getElementById("chat").innerHTML += `<p>${message}</p>`;
+            };
+
+            socket.onerror = function(error) {
+                console.error("WebSocket Error: " + error);
+            };
+
+            socket.onclose = function() {
+                console.log("WebSocket closed");
+            };
+        }
+
+        function sendMessage() {
+            const message = document.getElementById("message").value;
+            if (socket && socket.readyState === WebSocket.OPEN) {
+                socket.send(message);
+                document.getElementById("message").value = ""; // Очищаем поле ввода
+            } else {
+                console.error("WebSocket is not open");
+            }
+        }
+
+        window.onload = connect;
+    </script>
+</head>
+<body>
+<div id="chat"></div>
+<label for="message"></label><input type="text" id="message" placeholder="Type a message"/>
+<button onclick="sendMessage()">Send</button>
+</body>
+</html>
