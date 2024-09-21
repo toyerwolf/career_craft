@@ -34,4 +34,4 @@ web:
   resources:
    static-locations: classpath:/static/
 
-image-url-prefix: https://localhost:8443/
+image-url-prefix: https://35.173.133.91:8443/
