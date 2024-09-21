@@ -2,6 +2,7 @@ package com.example.careercraft.controller;
 
 import com.example.careercraft.req.UserRegistrationReq;
 import com.example.careercraft.service.RegistrationService;
+import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +18,7 @@ public class RegistrationController {
 
     @PostMapping
     @CrossOrigin(origins = "https://career-craft.netlify.app")
-    public ResponseEntity<String> registerUser(@RequestBody UserRegistrationReq request) {
+    public ResponseEntity<String> registerUser(@RequestBody @Valid UserRegistrationReq request) {
         registrationService.register(request);
         return ResponseEntity.status(HttpStatus.CREATED).body("Registration successful. Please check your email for confirmation.");
     }

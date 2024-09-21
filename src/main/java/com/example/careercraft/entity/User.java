@@ -2,6 +2,9 @@ package com.example.careercraft.entity;
 
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
+import jakarta.validation.constraints.Size;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
@@ -27,6 +30,10 @@ public class User {
     private String email;
 
     @Column(unique = true)
+    @NotBlank(message = "New password is required")
+    @Size(min = 8, message = "New password must be at least 8 characters long")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[@#$%^&+=!]).*$",
+            message = "New password must contain at least one letter, one number, and one special character")
     private String password;
     private LocalDateTime createdAt;
 
