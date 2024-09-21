@@ -2,46 +2,39 @@
 <html lang="en">
 <head>
     <title>Chat</title>
-    <script>
-        let socket;
+    <script type="text/javascript">
+        let ws;
 
-        function connect() {
-            socket = new WebSocket("wss://localhost:8443/chat"); // Убедитесь, что это правильный URL
+        let socket = new WebSocket("https://localhost:8443/chat");
 
-            socket.onopen = function() {
-                console.log("Connected to WebSocket");
-            };
+        socket.onopen = function() {
+            console.log("Connected to WebSocket");
+        };
 
-            socket.onmessage = function(event) {
-                const message = event.data;
-                document.getElementById("chat").innerHTML += `<p>${message}</p>`;
-            };
+        socket.onmessage = function(event) {
+            const message = event.data;
+            document.getElementById("chat").innerHTML += `<p>${message}</p>`;
+        };
 
-            socket.onerror = function(error) {
-                console.error("WebSocket Error: " + error);
-            };
+        socket.onerror = function(error) {
+            console.error("WebSocket Error: " + error);
+        };
 
-            socket.onclose = function() {
-                console.log("WebSocket closed");
-            };
-        }
+        socket.onclose = function() {
+            console.log("WebSocket closed");
+        };
 
         function sendMessage() {
-            const message = document.getElementById("message").value;
-            if (socket && socket.readyState === WebSocket.OPEN) {
-                socket.send(message);
-                document.getElementById("message").value = ""; // Очищаем поле ввода
-            } else {
-                console.error("WebSocket is not open");
-            }
+            let message = document.getElementById("message").value;
+            ws.send(message);
         }
 
         window.onload = connect;
     </script>
 </head>
 <body>
-<div id="chat"></div>
-<label for="message"></label><input type="text" id="message" placeholder="Type a message"/>
-<button onclick="sendMessage()">Send</button>
+<h1>Chat</h1>
+<label for="messages"></label><textarea id="messages" rows="10" cols="50" readonly></textarea><br/>
+<label for="message"></label><input type="text" id="message"/><button onclick="sendMessage()">Send</button>
 </body>
 </html>

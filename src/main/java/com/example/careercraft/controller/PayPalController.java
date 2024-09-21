@@ -1,4 +1,4 @@
-package com.example.careercraft.config;
+package com.example.careercraft.controller;
 
 import com.example.careercraft.service.impl.PayPalService;
 import com.paypal.base.rest.PayPalRESTException;

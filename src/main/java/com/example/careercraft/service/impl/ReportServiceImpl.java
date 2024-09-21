@@ -266,9 +266,8 @@ public class ReportServiceImpl implements ReportService {
 
     private SkillLevel determineSkillLevel(double percentageCorrect) {
         String level = switch ((int) percentageCorrect / 10) {
-            case 9 -> "EXPERT";
-            case 8, 7 -> "ADVANCED";
-            case 6, 5 -> "INTERMEDIATE";
+            case 8, 9 -> "ADVANCED";
+            case 6, 7 -> "INTERMEDIATE";
             default -> "BEGINNER";
         };
 
@@ -276,7 +275,6 @@ public class ReportServiceImpl implements ReportService {
     }
 
     private final Map<SkillLevel, Integer> skillLevelMap = Map.of(
-            SkillLevel.EXPERT, 4,
             SkillLevel.ADVANCED, 3,
             SkillLevel.INTERMEDIATE, 2,
             SkillLevel.BEGINNER, 1

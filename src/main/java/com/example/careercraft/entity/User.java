@@ -3,6 +3,8 @@ package com.example.careercraft.entity;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.Email;
 import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -10,7 +12,9 @@ import java.util.List;
 import java.util.Objects;
 
 @Entity
-@Data
+@Getter
+@Setter
+//@Data
 @Table(name = "users")
 public class User {
 
@@ -44,16 +48,27 @@ public class User {
         }
     }
 
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        User user = (User) o;
-        return Objects.equals(id, user.id);
+//    @Override
+//    public boolean equals(Object o) {
+//        if (this == o) return true;
+//        if (o == null || getClass() != o.getClass()) return false;
+//        User user = (User) o;
+//        return Objects.equals(id, user.id);
+//    }
+//
+//    @Override
+//    public int hashCode() {
+//        return Objects.hash(id);
+//    }
+//
+//    @Override
+//    public String toString() {
+//        return "User{" +
+//                "id=" + id +
+//                ", email='" + email + '\'' +
+//                ", createdAt=" + createdAt +
+//                ", locked=" + locked +
+//                ", role=" + role +
+//                '}';
     }
 
-    @Override
-    public int hashCode() {
-        return Objects.hash(id);
-    }
-}

@@ -69,33 +69,6 @@ public class ReportController {
         return ResponseEntity.ok(reports);
     }
 
-//    @GetMapping("/download")
-//    public void downloadReportsAsPdf(
-//            @RequestHeader("Authorization") String authHeader,
-//            @RequestParam Long categoryId,
-//            HttpServletResponse response) {
-//
-//        try {
-//            // Получаем агрегированный отчет и все отчеты по категории
-//            AggregatedReportDto aggregatedReport = reportService.getAggregatedReportForCategory(authHeader, categoryId);
-//            List<ReportDto> reports = reportService.getAllReportsForCategoryAndCustomer(authHeader, categoryId);
-//
-//            // Генерируем PDF
-//            byte[] pdfContent = pdfService.generatePdf(reports, aggregatedReport);
-//
-//            // Настраиваем заголовки ответа
-//            response.setContentType(MediaType.APPLICATION_PDF_VALUE);
-//            response.setHeader(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=reports.pdf");
-//            response.setContentLength(pdfContent.length);
-//
-//            // Записываем PDF в ответ
-//            response.getOutputStream().write(pdfContent);
-//            response.getOutputStream().flush();
-//        } catch (IOException e) {
-//            // В случае ошибки генерации или записи PDF возвращаем ошибку
-//            throw new PdfGenerationException("Failed to generate or send PDF document.");
-//        }
-//    }
 
     @GetMapping("/download")
     @CrossOrigin(origins = "https://career-craft.netlify.app")

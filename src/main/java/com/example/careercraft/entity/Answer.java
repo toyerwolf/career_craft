@@ -1,12 +1,14 @@
 package com.example.careercraft.entity;
 
 import jakarta.persistence.*;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 
 import java.util.Objects;
 
 @Entity
 @Data
+
 
 public class Answer {
 

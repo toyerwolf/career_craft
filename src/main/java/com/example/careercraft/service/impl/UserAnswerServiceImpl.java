@@ -56,28 +56,28 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     @Transactional
     @Override
     public QuestionResponse saveUserAnswerAndGetNextQuestion(String authHeader, UserAnswerRequest userAnswerRequest) {
-        // Извлечение информации о клиенте из заголовка авторизации (токена)
+
         CustomerInfo customerInfo = extractCustomerInfo(authHeader);
 
-        // Получение клиента из базы данных по идентификатору, извлеченному из токена
+
         Customer customer = getCustomer(customerInfo.getId());
 
-        // Получение вопроса из базы данных по идентификатору, предоставленному в запросе
+
         Question question = getQuestion(userAnswerRequest.getQuestionId());
 
-        // Извлечение ответа пользователя из запроса по значению порядка (если это некое перечисление)
+
         Answer answer = getAnswerByOrderValue(question, userAnswerRequest.getOrderValue());
 
-        // Получение навыка, к которому относится вопрос
+
         Skill skill = getSkill(question);
 
-        // Получение категории, к которой относится навык
+
         Category category = getCategory(skill);
 
-        // Обработка ответа пользователя (сохранение в базе данных, обновление статистики и т.д.)
+
         handleUserAnswer(customer, question, answer, skill);
 
-        // Определение следующего вопроса для пользователя в зависимости от состояния вопросов и навыков
+
         return getNextQuestionResponse(customer, skill, category);
     }
 

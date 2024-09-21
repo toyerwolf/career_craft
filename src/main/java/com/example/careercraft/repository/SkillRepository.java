@@ -2,6 +2,7 @@ package com.example.careercraft.repository;
 
 
 import com.example.careercraft.entity.Skill;
+import com.example.careercraft.entity.SkillLevel;
 import feign.Param;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -26,4 +27,6 @@ public interface SkillRepository extends JpaRepository<Skill, Long> {
     List<Long> findReportIdsBySkillIds(List<Long> skillIds);
 
     List<Skill> findByCategoryId(Long categoryId);
+
+//    Optional<Skill> findBySkillLevel(SkillLevel skillLevel);
 }

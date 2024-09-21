@@ -21,7 +21,8 @@ jwt:
   refreshTokenExpiration: ${refreshTokenExpiration}
 
 file:
-  allowed-extensions: pdf
+  allowed-extensions: jpg,jpeg,gif,ico,png
+  # Перечисляем допустимые расширения для файлов изображений
 
 springdoc:
   api-docs:
@@ -29,6 +30,8 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
 
-chatgpt:
-  api:
-    key: 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
+web:
+  resources:
+   static-locations: classpath:/static/
+
+image-url-prefix: https://localhost:8443/
