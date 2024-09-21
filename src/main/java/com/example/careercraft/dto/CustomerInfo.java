@@ -14,6 +14,7 @@ public class CustomerInfo {
     private String name;
     private String surname;
     private String address;
-    private LocalDateTime registeredAt;
     private String email;
+
+
 }

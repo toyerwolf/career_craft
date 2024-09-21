@@ -171,7 +171,6 @@ public class AuthServiceImpl implements AuthService {
                 customer.getName(),
                 customer.getSurname(),
                 customer.getAddress(),
-                customer.getRegisteredAt(),
                 email
         );
     }

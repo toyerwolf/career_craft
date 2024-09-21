@@ -12,8 +12,10 @@ public class UserRegistrationReq {
     @Email
     private String email;
 
-    @NotBlank
-    @Pattern(regexp = "^[a-zA-Z0-9!@#$%^&*()-_=+]{8,12}$",message = "password is not required")
+    @NotBlank(message = "New password is required")
+    @Size(min = 8, message = "New password must be at least 8 characters long")
+    @Pattern(regexp = "^(?=.*[a-zA-Z])(?=.*[0-9])(?=.*[@#$%^&+=!]).*$",
+            message = "New password must contain at least one letter, one number, and one special character")
     private String password;
 
     @NotBlank(message = "Surname is required")

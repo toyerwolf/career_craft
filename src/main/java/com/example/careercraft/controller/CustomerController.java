@@ -18,7 +18,6 @@ public class CustomerController {
 
     @Secured("USER")
     @GetMapping("info")
-    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<CustomerInfo> getCustomerDetails(@RequestHeader("Authorization") String authHeader) {
         CustomerInfo customerDto = authService.getCustomerDetailsFromToken(authHeader);
         return ResponseEntity.ok(customerDto);
