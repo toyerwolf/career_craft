@@ -1,9 +1,53 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
-    <title>Home</title>
+    <title>Оплата</title>
+    <script src="https://js.braintreegateway.com/web/3.81.0/js/client.min.js"></script>
+    <script src="https://js.braintreegateway.com/web/3.81.0/js/hosted-fields.min.js"></script>
 </head>
 <body>
-<h1>Welcome, ${email}!</h1>
+<form id="payment-form">
+    <div id="card-number"></div>
+    <div id="expiration-date"></div>
+    <div id="cvv"></div>
+    <button type="submit">Оплатить</button>
+</form>
+<div id="card-errors" role="alert"></div>
+
+<script>
+    // Получение клиентского токена
+    fetch('client-token')
+        .then(function(response) {
+            return response.text();
+        })
+        .then(function(clientToken) {
+            braintree.dropin.create({
+                authorization: clientToken,
+                container: '#payment-form'
+            }, function (createErr, instance) {
+                document.getElementById('payment-form').addEventListener('submit', function (event) {
+                    event.preventDefault();
+                    instance.requestPaymentMethod(function (err, payload) {
+                        // Отправка nonce на сервер
+                        fetch('reports/generate-reports', {
+                            method: 'POST',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': 'Bearer YOUR_AUTH_TOKEN'
+                            },
+                            body: JSON.stringify({
+                                paymentMethodNonce: payload.nonce,
+                                amount: '10.00' // Сумма к оплате
+                            })
+                        }).then(function (response) {
+                            return response.json();
+                        }).then(function (response) {
+                            // Обработка ответа от сервера
+                        });
+                    });
+                });
+            });
+        });
+</script>
 </body>
 </html>

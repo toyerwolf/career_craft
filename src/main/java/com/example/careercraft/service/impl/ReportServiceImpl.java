@@ -12,7 +12,7 @@ import com.example.careercraft.service.ReportService;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
+
 import org.springframework.stereotype.Service;
 
 import java.math.BigDecimal;
@@ -45,6 +45,8 @@ public class ReportServiceImpl implements ReportService {
     private final CategoryRepository categoryRepository;
     private final AggregatedReportRepository aggregatedReportRepository;
     private final CategoryService categoryService;
+
+
 
     @Override
     public List<AggregatedReportDto> generateReportForSkills(Long customerId, Long categoryId) {

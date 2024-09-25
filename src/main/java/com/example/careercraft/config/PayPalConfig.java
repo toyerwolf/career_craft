@@ -13,23 +13,18 @@ import java.util.Map;
 @Configuration
 public class PayPalConfig {
 
+    private static final String CLIENT_ID = "AdCxHdEwV8JXylF5rDhxdJTrNDRdWeke603R_HUZw7UZJsIIsrEMbwyQWtIgi7jCLu_LtFVELLobkEx-";
+    private static final String CLIENT_SECRET = "EIpmFlOaRhL4Lu4bqnluQzrYu6Yjx2KULzyp98Mlh6vgQY4SO_1VcJeyXca8VKv0XpUQzB2yvkfsICd0";
+    private static final String MODE = "live";  // Укажите "live" для продакшена
+
     @Bean
     public APIContext apiContext() throws PayPalRESTException {
-        // Ваши клиентские данные
-        String clientId = "Aeo1dYj0ZzamXOGhr8kjVcI4WblH7cG1jWx-NBvpSbDJp5JXap5BiGKrzv-s7oqbDcrjVo6v6BbF0s6g";
-        String clientSecret = "EO0dGnxT_qhIzKgp8fWxgyCu9-zRsA-n4bg-evaixOwDOfv7P4UVDQkTDUYJ7gpSxC4u1b99PgKRi3bq";
-
-        // Создание конфигурации PayPal
+        // Конфигурация PayPal
         Map<String, String> configMap = new HashMap<>();
-        configMap.put("mode", "sandbox"); // Или "live" для продакшена
-        configMap.put("service.EndPoint", "https://api.sandbox.paypal.com");
+        configMap.put("mode", MODE);
 
-        // Получение accessToken
-        OAuthTokenCredential authTokenCredential = new OAuthTokenCredential(clientId, clientSecret, configMap);
-        String accessToken = authTokenCredential.getAccessToken();
-
-        // Настройка APIContext с полученным accessToken
-        APIContext apiContext = new APIContext(accessToken);
+        // Создание APIContext с clientId и clientSecret
+        APIContext apiContext = new APIContext(CLIENT_ID, CLIENT_SECRET, MODE);
         apiContext.setConfigurationMap(configMap);
 
         return apiContext;

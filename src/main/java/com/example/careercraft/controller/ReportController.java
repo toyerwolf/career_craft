@@ -1,15 +1,22 @@
 package com.example.careercraft.controller;
 
+import com.braintreegateway.BraintreeGateway;
+import com.braintreegateway.Result;
+import com.braintreegateway.Transaction;
+import com.braintreegateway.TransactionRequest;
 import com.example.careercraft.dto.AggregatedReportDto;
+import com.example.careercraft.dto.ApiResponse;
 import com.example.careercraft.dto.CustomerInfo;
 import com.example.careercraft.dto.ReportDto;
 import com.example.careercraft.exception.PdfGenerationException;
+import com.example.careercraft.req.PaymentRequest;
 import com.example.careercraft.service.AuthService;
 import com.example.careercraft.service.PdfService;
 import com.example.careercraft.service.ReportService;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.AllArgsConstructor;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -27,23 +34,55 @@ public class ReportController {
 
     private final PdfService pdfService;
 
+    private  final BraintreeGateway braintreeGateway;
+
 
 
     @GetMapping("")
     @Secured("USER")
-    @CrossOrigin(origins = "https://career-craft.netlify.app")
-    public ResponseEntity<List<AggregatedReportDto>> generateReports(
-            @RequestHeader(value = "Authorization") String authHeader,
-            @RequestParam Long categoryId) {
 
-        // Получаем информацию о клиенте из токена
+    public ResponseEntity<List<AggregatedReportDto>> generateReports(
+            @RequestHeader(value = "Aut" +
+                    "" +
+                    "horization") String authHeader,
+            @RequestParam Long categoryId) {
+        CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
+        List<AggregatedReportDto> reports = reportService.generateReportForSkills(customerInfo.getId(), categoryId);
+        return ResponseEntity.ok(reports);
+    }
+
+    @GetMapping("/generate-reports")
+    @Secured("USER")
+    public ResponseEntity<ApiResponse<List<AggregatedReportDto>>> generateReports(
+            @RequestHeader(value = "Authorization") String authHeader,
+            @RequestParam Long categoryId,
+            @RequestBody PaymentRequest paymentRequest) {
+        // 1. Получаем детали клиента
         CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
 
-        // Генерируем отчеты для указанных навыков и категории
-        List<AggregatedReportDto> reports = reportService.generateReportForSkills(customerInfo.getId(), categoryId);
+        // 2. Обрабатываем платеж
+        TransactionRequest request = new TransactionRequest()
+                .amount(paymentRequest.getAmount()) // Сумма к оплате
+                .paymentMethodNonce(paymentRequest.getPaymentMethodNonce()) // Полученный nonce
+                .options()
+                .submitForSettlement(true)
+                .done();
 
-        // Возвращаем результат
-        return ResponseEntity.ok(reports);
+        Result<Transaction> result = braintreeGateway.transaction().sale(request);
+
+        // 3. Проверяем результат транзакции
+        if (!result.isSuccess()) {
+            ApiResponse<List<AggregatedReportDto>> response = new ApiResponse<>();
+            response.setMessage("Payment failed: " + result.getMessage());
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(response);
+        }
+
+        // 4. Если платеж успешен, генерируем отчет
+        List<AggregatedReportDto> reports = reportService.generateReportForSkills(customerInfo.getId(), categoryId);
+        ApiResponse<List<AggregatedReportDto>> response = new ApiResponse<>();
+        response.setMessage("Reports generated successfully");
+        response.setData(reports);
+        return ResponseEntity.ok(response);
     }
 
     @GetMapping("/aggregated")

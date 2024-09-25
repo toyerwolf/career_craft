@@ -29,7 +29,6 @@ public class PasswordResetController {
 
 
     @PostMapping("/reset")
-    @CrossOrigin(origins = "https://career-craft.netlify.app")
     public ResponseEntity<String> resetPassword(
             @Valid @RequestBody ResetPasswordRequest resetDto) {
         passwordResetService.resetPassword(
