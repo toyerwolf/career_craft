@@ -140,7 +140,7 @@ public class RecommendationServiceImpl implements RecommendationService {
     }
 
     private Optional<SkillLevel> getSkillLevelFromReport(Long customerId, Long skillId) {
-        return Optional.ofNullable(reportRepository.findLatestReportByCustomerIdAndSkillId(customerId, skillId))
+        return Optional.ofNullable(reportRepository.findLatestValidReportByCustomerIdAndSkillId(customerId, skillId))
                 .map(Report::getSkillLevel); // Если отчет не найден, возвращаем Optional.empty
     }
 

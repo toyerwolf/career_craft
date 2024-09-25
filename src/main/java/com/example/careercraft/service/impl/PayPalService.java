@@ -39,7 +39,7 @@ public class PayPalService {
 
         // Добавляем Payee (получатель)
         Payee payee = new Payee();
-        payee.setEmail("sb-ld0ax26148476@business.example.com"); // Укажите email вашего sandbox бизнес-аккаунта
+        payee.setEmail("huseynmamedov472@gmail.com"); // Укажите email вашего sandbox бизнес-аккаунта
         transaction.setPayee(payee);
 
         List<Transaction> transactions = new ArrayList<>();

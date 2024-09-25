@@ -22,7 +22,13 @@ public interface ReportRepository extends JpaRepository<Report,Long> {
     List<Report> findAllByCustomerIdAndCategoryIdAndValid(Long customerId, Long categoryId, boolean valid);
 
 
-    @Query("SELECT r FROM Report r WHERE r.customer.id = :customerId AND r.skill.id = :skillId ORDER BY r.id DESC")
-    Report findLatestReportByCustomerIdAndSkillId(@Param("customerId") Long customerId, @Param("skillId") Long skillId);
+    @Query("SELECT r FROM Report r WHERE r.customer.id = :customerId AND r.skill.id = :skillId AND r.valid = true ORDER BY r.id DESC")
+    Report findLatestValidReportByCustomerIdAndSkillId(@Param("customerId") Long customerId, @Param("skillId") Long skillId);
+
+
 }
+
+//    @Query("SELECT r FROM Report r WHERE r.customer.id = :customerId AND r.skill.id = :skillId ORDER BY r.id DESC")
+//    List<Report> findReportsByCustomerIdAndSkillId(@Param("customerId") Long customerId, @Param("skillId") Long skillId);
+//}
 

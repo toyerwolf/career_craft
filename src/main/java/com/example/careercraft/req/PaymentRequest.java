@@ -9,4 +9,6 @@ import java.math.BigDecimal;
 @Setter
 public class PaymentRequest {
     private BigDecimal amount; // Сумма платежа
-    private String paymentMethodNonce;}
+    private String paymentMethodNonce;
+
+}
