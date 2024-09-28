@@ -1,0 +1,11 @@
+global:
+  scrape_interval: 15s  # Интервал сбора метрик
+
+scrape_configs:
+  - job_name: 'career_craft'
+    scheme: https
+    static_configs:
+      - targets: ['localhost:8443']  # Указываем только хост и порт
+    metrics_path: /actuator/prometheus  # Указываем путь к метрикам
+    tls_config:
+      insecure_skip_verify: true

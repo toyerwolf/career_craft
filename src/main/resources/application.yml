@@ -3,7 +3,7 @@ server:
 
 spring:
   profiles:
-    include: db,google,mail,ssl,chatgtp
+    include: db,google,mail,ssl,chatgtp,metrics,actuator
   main:
     allow-bean-definition-overriding: true
   servlet:

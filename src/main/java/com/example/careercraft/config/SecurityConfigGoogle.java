@@ -80,6 +80,7 @@ public class SecurityConfigGoogle {
                                 "/webjars/**",
                                 "/api/auth/**",
                                 "/registration/**",
+                                "/actuator/**",
                                 "/").permitAll()
                         .anyRequest().permitAll()
                 )
