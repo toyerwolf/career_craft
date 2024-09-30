@@ -120,7 +120,7 @@ public class PasswordResetServiceImpl implements PasswordResetService {
 
 
     private void sendPasswordResetEmail(String email, String token) {
-        String resetUrl =  "https://localhost:5173/auth/password/reset"; // URL без параметров
+        String resetUrl =  "http://localhost:5173/auth/password/reset"; // URL без параметров
         String subject = "Password Reset Request";
         String message = String.format(
                 "To reset your password, please use the following link:\n\n%s\n\n" +
