@@ -45,6 +45,7 @@ public class ReportServiceImpl implements ReportService {
     private final CategoryRepository categoryRepository;
     private final AggregatedReportRepository aggregatedReportRepository;
     private final CategoryService categoryService;
+    private final CategoryFinderService categoryFinderService;
 
 
 
@@ -185,15 +186,12 @@ public class ReportServiceImpl implements ReportService {
 
     private Report createReport(Long customerId, List<UserAnswer> userAnswers, Skill skill, Long categoryId) {
         log.info("Creating report with customerId: {}, skillId: {}, categoryId: {}", customerId, skill.getId(), categoryId);
-
         BigDecimal totalScore = calculateTotalScore(userAnswers);
         long totalQuestionsForSkill = countTotalQuestionsForSkill(skill);
         double percentageCorrect = calculatePercentageCorrect(totalScore, totalQuestionsForSkill);
         SkillLevel skillLevel = determineSkillLevel(percentageCorrect);
         Customer customer = customerFinderService.getCustomer(customerId);
-        Category category = categoryRepository.findById(categoryId)
-                .orElseThrow(() -> new NotFoundException("Category not found with id: " + categoryId));
-
+        Category category = categoryFinderService.findCategoryById(categoryId);
         Report report = buildReport(customer, userAnswers, skill, totalScore, percentageCorrect, skillLevel, category);
         report.setValid(true);
         log.info("Report built: {}", report);
