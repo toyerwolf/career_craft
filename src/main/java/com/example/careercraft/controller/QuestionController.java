@@ -13,6 +13,7 @@ import com.example.careercraft.service.QuestionService;
 import com.example.careercraft.service.SkillService;
 import io.swagger.v3.oas.annotations.security.SecurityRequirement;
 import lombok.AllArgsConstructor;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.annotation.Secured;
@@ -87,38 +88,14 @@ public class QuestionController {
         QuestionResponse questionResponse = questionService.findNextQuestion(currentQuestionId, skillId, jobId,categoryId);
         return ResponseEntity.ok(questionResponse);
     }
-//
-//    @GetMapping("/previousQuestionInSkill")
-//    @Secured("USER")
-//    public ResponseEntity<QuestionResponse> getPreviousQuestion(
-//            @RequestParam("skillId") Long skillId,
-//            @RequestParam("currentQuestionId") Long currentQuestionId,
-//            @RequestParam("jobId") Long jobId) { // Добавлен параметр jobId
-//        // Вызов метода сервиса, который может выбросить исключение
-//        QuestionResponse questionResponse = questionService.getPreviousQuestion(skillId, jobId, currentQuestionId);
-//        return ResponseEntity.ok(questionResponse);
-//    }
 
-//    @GetMapping("/getInitialData")
-//    @Secured("USER")
-//    public ResponseEntity<Map<String, Object>> getInitialData() {
-//        Map<String, Object> response = new HashMap<>();
-//
-//        // Получаем идентификаторы всех навыков
-//        Collection<Long> skillIds = skillService.getAllSkillIds();
-//
-//        // Получаем идентификаторы всех работ
-//        Collection<Long> jobIds = jobService.getAllJobIds();
-//
-//        // Можно добавить id, если он нужен, например, дефолтный ID
-//        // Long id = jobService.getDefaultId(); // Если этот метод существует и нужен
-//
-//        response.put("skillIds", skillIds);
-//        response.put("jobIds", jobIds);
-//        // response.put("id", id); // Если id не нужен, можно удалить эту строку
-//
-//        return ResponseEntity.ok(response);
-//    }
+
+    @GetMapping("/customer")
+    public ResponseEntity<List<QuestionIdsDto>> getAllQuestionsByCustomer(@RequestHeader(value = "Authorization") String authHeader) {
+        List<QuestionIdsDto> questions = questionService.getAllQuestionsByCustomer(authHeader);
+        return ResponseEntity.ok(questions);
+    }
+
 
 
 

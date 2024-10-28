@@ -40,4 +40,6 @@ public interface QuestionService {
 
     public long getTotalQuestionsCount();
 
+    public List<QuestionIdsDto> getAllQuestionsByCustomer(String authHeader);
+
 }

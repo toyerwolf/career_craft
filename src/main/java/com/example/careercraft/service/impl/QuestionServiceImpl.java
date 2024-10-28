@@ -1,6 +1,7 @@
 package com.example.careercraft.service.impl;
 
 
+import com.example.careercraft.dto.CustomerInfo;
 import com.example.careercraft.dto.QuestionIdsDto;
 import com.example.careercraft.dto.SkillQuestionResponse;
 import com.example.careercraft.entity.*;
@@ -13,6 +14,7 @@ import com.example.careercraft.mapper.SkillResponseMapperForCategory;
 import com.example.careercraft.repository.JobRepository;
 import com.example.careercraft.repository.QuestionRepository;
 import com.example.careercraft.repository.SkillRepository;
+import com.example.careercraft.repository.UserAnswerRepository;
 import com.example.careercraft.req.AnswerRequest;
 import com.example.careercraft.req.QuestionRequest;
 
@@ -20,10 +22,7 @@ import com.example.careercraft.response.AnswerResponse;
 import com.example.careercraft.response.DetailedSkillQuestionResponse;
 import com.example.careercraft.response.QuestionResponse;
 
-import com.example.careercraft.service.AnswerService;
-import com.example.careercraft.service.CategoryService;
-import com.example.careercraft.service.QuestionService;
-import com.example.careercraft.service.SkillService;
+import com.example.careercraft.service.*;
 import jakarta.transaction.Transactional;
 import lombok.AllArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -45,6 +44,8 @@ public class QuestionServiceImpl implements QuestionService {
     private final SkillService skillService;
     private final JobRepository jobRepository;
     private final CategoryService categoryService;
+    private final UserAnswerRepository userAnswerRepository;
+    private final AuthService authService;
 
 
 
@@ -256,6 +257,21 @@ public class QuestionServiceImpl implements QuestionService {
                     List<AnswerResponse> answers = answerService.getAnswersByQuestionId(question.getId());
                     return new QuestionIdsDto(question.getId(), question.getText(), answers);
                 })
+                .collect(Collectors.toList());
+    }
+
+    public List<QuestionIdsDto> getAllQuestionsByCustomer(String authHeader) {
+        // Получаем информацию о клиенте из токена
+        CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
+        Long customerId = customerInfo.getId(); // Предполагается, что CustomerInfo содержит customerId
+        List<Question> questions = questionRepository.findAll();
+        return questions.stream()
+                .map(question -> {
+                    // Получаем список ответов для текущего вопроса в формате DTO
+                    List<AnswerResponse> answers = answerService.getAnswersByQuestionId(question.getId());
+                    return new QuestionIdsDto(question.getId(), question.getText(), answers);
+                })
+                .filter(questionDto -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customerId, questionDto.getId())) // Фильтруем отвеченные вопросы
                 .collect(Collectors.toList());
     }
 
