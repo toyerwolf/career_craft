@@ -19,7 +19,7 @@ public class QuestionWithReportsResponse {
 
     private Long id;
     private String text;
-    private Long jobId; // Идентификатор работы, к которой относится вопрос
+    private Long jobId;
     private List<AnswerResponse> answers;
     private List<AggregatedReportDto> reports;;
 }

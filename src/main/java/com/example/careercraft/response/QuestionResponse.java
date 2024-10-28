@@ -23,6 +23,7 @@ public class QuestionResponse {
     private List<AnswerResponse> answers;
     private String message;
     private Integer answeredQuestionsCount;
+    private boolean answered;
 //    private JobDto jobDto;
 
 

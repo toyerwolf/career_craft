@@ -35,6 +35,8 @@ public class Question {
     )
     private Set<Skill> skills = new HashSet<>();
 
+    private boolean answered;
+
     @Override
     public String toString() {
         return "Question{id=" + id + ", text='" + text + "'}";
