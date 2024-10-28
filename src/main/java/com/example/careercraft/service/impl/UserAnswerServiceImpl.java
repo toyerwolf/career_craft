@@ -179,7 +179,6 @@ public class UserAnswerServiceImpl implements UserAnswerService {
                                 .build())
                         .collect(Collectors.toList())) // Список ответов
                 .answeredQuestionsCount(customer.getAnsweredQuestionsCount()) // Установка количества отвеченных вопросов
-                .answered(question.isAnswered()) // Добавляем поле answered из Question
                 .build();
     }
 
@@ -267,7 +266,6 @@ public class UserAnswerServiceImpl implements UserAnswerService {
         userAnswer.setQuestion(question); // Установить вопрос
         userAnswer.setAnswer(answer); // Установить ответ
         userAnswer.setSkill(skill);
-        question.setAnswered(true);
         // Установить навык
 
         userAnswerRepository.save(userAnswer); // Попытка сохранить ответ
