@@ -24,6 +24,8 @@ public class QuestionResponse {
     private String message;
     private Integer answeredQuestionsCount;
 
+    private boolean completed;
+
 //    private JobDto jobDto;
 
 

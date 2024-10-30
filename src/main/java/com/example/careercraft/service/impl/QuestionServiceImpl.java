@@ -255,25 +255,64 @@ public class QuestionServiceImpl implements QuestionService {
                 .map(question -> {
                     // Получаем список ответов для текущего вопроса в формате DTO
                     List<AnswerResponse> answers = answerService.getAnswersByQuestionId(question.getId());
-                    return new QuestionIdsDto(question.getId(), question.getText(), answers);
+
+                    // Создаем DTO с помощью Lombok Builder
+                    return QuestionIdsDto.builder()
+                            .id(question.getId())
+                            .text(question.getText())
+                            .answers(answers)
+                            .build();
                 })
                 .collect(Collectors.toList());
     }
 
     public List<QuestionIdsDto> getAllQuestionsByCustomer(String authHeader) {
-        // Получаем информацию о клиенте из токена
         CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
-        Long customerId = customerInfo.getId(); // Предполагается, что CustomerInfo содержит customerId
+        Long customerId = customerInfo.getId();
+
         List<Question> questions = questionRepository.findAll();
-        return questions.stream()
+
+        List<QuestionIdsDto> questionDtos = questions.stream()
                 .map(question -> {
-                    // Получаем список ответов для текущего вопроса в формате DTO
                     List<AnswerResponse> answers = answerService.getAnswersByQuestionId(question.getId());
-                    return new QuestionIdsDto(question.getId(), question.getText(), answers);
+                    return QuestionIdsDto.builder()
+                            .id(question.getId())
+                            .text(question.getText())
+                            .answers(answers)
+                            .completed(false) // По умолчанию false
+                            .build();
                 })
-                .filter(questionDto -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customerId, questionDto.getId())) // Фильтруем отвеченные вопросы
+                .filter(questionDto ->
+                        !userAnswerRepository.existsByCustomerIdAndQuestionId(customerId, questionDto.getId()))
                 .collect(Collectors.toList());
+
+        // Используем метод для проверки завершения
+        return getCompletedOrQuestionDtos(questionDtos);
     }
+
+    private List<QuestionIdsDto> getCompletedOrQuestionDtos(List<QuestionIdsDto> questionDtos) {
+        return questionDtos.isEmpty()
+                ? List.of(QuestionIdsDto.builder()
+                .completed(true)
+                .message("You answered all questions!")
+                .build())
+                : questionDtos;
+    }
+
+//    public List<QuestionIdsDto> getAllQuestionsByCustomer(String authHeader) {
+//        // Получаем информацию о клиенте из токена
+//        CustomerInfo customerInfo = authService.getCustomerDetailsFromToken(authHeader);
+//        Long customerId = customerInfo.getId(); // Предполагается, что CustomerInfo содержит customerId
+//        List<Question> questions = questionRepository.findAll();
+//        return questions.stream()
+//                .map(question -> {
+//                    // Получаем список ответов для текущего вопроса в формате DTO
+//                    List<AnswerResponse> answers = answerService.getAnswersByQuestionId(question.getId());
+//                    return new QuestionIdsDto(question.getId(), question.getText(), answers);
+//                })
+//                .filter(questionDto -> !userAnswerRepository.existsByCustomerIdAndQuestionId(customerId, questionDto.getId())) // Фильтруем отвеченные вопросы
+//                .collect(Collectors.toList());
+//    }
 
     @Override
     public long getTotalQuestionsCount() {

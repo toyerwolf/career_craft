@@ -11,4 +11,5 @@ public interface UserAnswerRepository extends JpaRepository<UserAnswer,Long> {
     boolean existsByCustomerIdAndQuestionId(Long id, Long id1);
 
 
+    long countByCustomerId(Long id);
 }

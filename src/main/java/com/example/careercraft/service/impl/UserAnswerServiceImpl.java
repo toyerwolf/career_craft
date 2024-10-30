@@ -53,32 +53,56 @@ public class UserAnswerServiceImpl implements UserAnswerService {
     private final CustomerRepository customerRepository;
 
 
-    @Transactional
+
+//    @Override
+//    public QuestionResponse saveUserAnswerAndGetNextQuestion(String authHeader, UserAnswerRequest userAnswerRequest) {
+//        CustomerInfo customerInfo = extractCustomerInfo(authHeader);
+//        Customer customer = getCustomer(customerInfo.getId());
+//        Question question = getQuestion(userAnswerRequest.getQuestionId());
+//        Answer answer = getAnswerByOrderValue(question, userAnswerRequest.getOrderValue());
+//        Skill skill = getSkill(question);
+//        Category category = getCategory(skill);
+//        handleUserAnswer(customer, question, answer, skill);
+//        return getNextQuestionResponse(customer, skill, category);
+//    }
+
+
     @Override
+    @Transactional
     public QuestionResponse saveUserAnswerAndGetNextQuestion(String authHeader, UserAnswerRequest userAnswerRequest) {
 
+        // Получаем информацию о клиенте из токена
         CustomerInfo customerInfo = extractCustomerInfo(authHeader);
-
-
         Customer customer = getCustomer(customerInfo.getId());
 
-
+        // Находим вопрос и ответ
         Question question = getQuestion(userAnswerRequest.getQuestionId());
-
-
         Answer answer = getAnswerByOrderValue(question, userAnswerRequest.getOrderValue());
 
-
+        // Получаем навык и категорию
         Skill skill = getSkill(question);
-
-
         Category category = getCategory(skill);
 
-
+        // Обрабатываем ответ пользователя
         handleUserAnswer(customer, question, answer, skill);
 
+        // Проверяем, все ли вопросы отвечены и возвращаем результат, если да
+        return areAllQuestionsAnsweredWithResponse(customer)
+                .orElseGet(() -> getNextQuestionResponse(customer, skill, category));
+    }
 
-        return getNextQuestionResponse(customer, skill, category);
+    private Optional<QuestionResponse> areAllQuestionsAnsweredWithResponse(Customer customer) {
+        long totalQuestions = questionRepository.count();
+        long answeredQuestions = userAnswerRepository.countByCustomerId(customer.getId());
+
+        if (answeredQuestions >= totalQuestions) {
+            log.info("Все вопросы отвечены для пользователя с ID: {}", customer.getId());
+            return Optional.of(QuestionResponse.builder()
+                    .completed(true)
+                    .message("You are answered all questions!")
+                    .build());
+        }
+        return Optional.empty();
     }
 
     private QuestionResponse getNextQuestionResponse(Customer customer, Skill currentSkill, Category currentCategory) {
@@ -265,8 +289,7 @@ public class UserAnswerServiceImpl implements UserAnswerService {
         userAnswer.setCustomer(customer); // Установить клиента
         userAnswer.setQuestion(question); // Установить вопрос
         userAnswer.setAnswer(answer); // Установить ответ
-        userAnswer.setSkill(skill);
-        // Установить навык
+        userAnswer.setSkill(skill); // Установить навык
 
         userAnswerRepository.save(userAnswer); // Попытка сохранить ответ
     }

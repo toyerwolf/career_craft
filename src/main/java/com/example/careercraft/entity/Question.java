@@ -3,12 +3,16 @@ package com.example.careercraft.entity;
 import jakarta.persistence.*;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.springframework.stereotype.Service;
 
 import java.util.*;
 
 @Entity
-@Data
-@EqualsAndHashCode(of = "id")
+@Getter
+@Setter
+
 public class Question {
 
     @Id
@@ -35,10 +39,10 @@ public class Question {
     )
     private Set<Skill> skills = new HashSet<>();
 
-    @Override
-    public String toString() {
-        return "Question{id=" + id + ", text='" + text + "'}";
-    }
+//    @Override
+//    public String toString() {
+//        return "Question{id=" + id + ", text='" + text + "'}";
+//    }
 
 //    @ManyToOne
 //    @JoinColumn(name = "category_id") // Добавление связи с категорией
